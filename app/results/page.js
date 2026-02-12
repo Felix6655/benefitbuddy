@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Heart,
   Printer,
@@ -18,6 +21,9 @@ import {
   MapPin,
   Users,
   Calendar,
+  Phone,
+  X,
+  UserCheck,
 } from 'lucide-react';
 import { getSnapStateApplyUrl, getMedicaidHelpUrl, OFFICIAL_PROGRAM_URLS, getStateNameFromAbbr } from '@/lib/stateLinks';
 
