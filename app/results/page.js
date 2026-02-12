@@ -428,8 +428,39 @@ function TrustBadge() {
   );
 }
 
-function ProgramCard({ match }) {
+function ProgramCard({ match, userState }) {
   const { program, reasons, requirements } = match;
+  
+  // Get the appropriate apply URL based on program and user's state
+  const getApplyUrl = () => {
+    switch (program.id) {
+      case 'snap':
+        // SNAP has verified state-specific URLs via USDA/FNS
+        return getSnapStateApplyUrl(userState);
+      case 'medicaid':
+      case 'chip':
+        // Medicaid/CHIP uses the official help page
+        return OFFICIAL_PROGRAM_URLS.medicaid;
+      case 'medicare_savings':
+        return OFFICIAL_PROGRAM_URLS.medicare_savings;
+      case 'housing':
+        return OFFICIAL_PROGRAM_URLS.housing;
+      case 'liheap':
+        return OFFICIAL_PROGRAM_URLS.liheap;
+      case 'va_benefits':
+        return OFFICIAL_PROGRAM_URLS.va_benefits;
+      case 'ssi':
+        return OFFICIAL_PROGRAM_URLS.ssi;
+      case 'wic':
+        return OFFICIAL_PROGRAM_URLS.wic;
+      default:
+        return program.officialLink;
+    }
+  };
+
+  const applyUrl = getApplyUrl();
+  const isSnapWithState = program.id === 'snap' && userState;
+  const stateName = userState ? getStateNameFromAbbr(userState) : null;
   
   return (
     <Card 
@@ -500,22 +531,31 @@ function ProgramCard({ match }) {
         </div>
 
         {/* Apply button */}
-        <a 
-          href={program.officialLink} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="block pt-2"
-        >
-          <Button 
-            className="w-full h-12 text-lg text-white"
-            style={{ backgroundColor: '#D08C60' }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
+        <div className="pt-2">
+          <a 
+            href={applyUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block"
           >
-            Apply / Learn More
-            <ExternalLink className="ml-2 w-5 h-5" />
-          </Button>
-        </a>
+            <Button 
+              className="w-full h-12 text-lg text-white"
+              style={{ backgroundColor: '#D08C60' }}
+              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
+              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
+            >
+              Apply / Learn More
+              <ExternalLink className="ml-2 w-5 h-5" />
+            </Button>
+          </a>
+          {/* State-specific link notice for SNAP */}
+          {isSnapWithState && (
+            <p className="text-sm text-center mt-2" style={{ color: '#6B625A' }}>
+              <MapPin className="w-3.5 h-3.5 inline-block mr-1" style={{ color: '#D08C60' }} />
+              This link takes you to {stateName || 'your state'}'s official SNAP contact and application info.
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
