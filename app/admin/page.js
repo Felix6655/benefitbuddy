@@ -178,7 +178,7 @@ function AdminContent() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'new':
-        return <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"><Clock className="w-3 h-3" /> New</span>;
+        return <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#FFF8F0] text-[#D08C60] border border-[#E8DDCF] rounded-full text-sm"><Clock className="w-3 h-3" /> New</span>;
       case 'contacted':
         return <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm"><RefreshCw className="w-3 h-3" /> Contacted</span>;
       case 'closed':
@@ -191,25 +191,25 @@ function AdminContent() {
   // Login Screen
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <Card className="max-w-md w-full">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F1E9] p-4">
+        <Card className="max-w-md w-full border-[#E8DDCF]">
           <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-[#D08C60] rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
+            <CardTitle className="text-2xl text-[#3D3530]">Admin Access</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={(e) => { e.preventDefault(); handleAuth(adminKey); }} className="space-y-4">
               <div>
-                <Label htmlFor="adminKey" className="text-lg">Admin Key</Label>
+                <Label htmlFor="adminKey" className="text-lg text-[#3D3530]">Admin Key</Label>
                 <Input
                   id="adminKey"
                   type="password"
                   value={adminKey}
                   onChange={(e) => setAdminKey(e.target.value)}
                   placeholder="Enter admin key"
-                  className="mt-2 h-12 text-lg"
+                  className="mt-2 h-12 text-lg border-[#E8DDCF]"
                   required
                 />
               </div>
@@ -221,7 +221,7 @@ function AdminContent() {
                 </div>
               )}
               
-              <Button type="submit" className="w-full h-12 text-lg" disabled={loading}>
+              <Button type="submit" className="w-full h-12 text-lg bg-[#D08C60] hover:bg-[#B76E45]" disabled={loading}>
                 {loading ? (
                   <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Verifying...</>
                 ) : (
@@ -231,7 +231,7 @@ function AdminContent() {
             </form>
             
             <div className="mt-6 text-center">
-              <Link href="/" className="text-blue-600 hover:underline">
+              <Link href="/" className="text-[#D08C60] hover:text-[#B76E45] hover:underline">
                 ← Back to BenefitBuddy
               </Link>
             </div>
@@ -243,21 +243,21 @@ function AdminContent() {
 
   // Admin Dashboard
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8F1E9]">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b border-[#E8DDCF]">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-[#D08C60] rounded-full flex items-center justify-center">
                 <Heart className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold text-blue-900">BenefitBuddy</span>
+              <span className="text-xl font-bold text-[#3D3530]">BenefitBuddy</span>
             </Link>
-            <span className="text-gray-400">|</span>
+            <span className="text-[#E8DDCF]">|</span>
             <span className="text-muted font-medium">Admin Panel</span>
           </div>
-          <Button variant="outline" onClick={() => { localStorage.removeItem('benefitbuddy_admin_key'); setIsAuthenticated(false); }}>
+          <Button variant="outline" onClick={() => { localStorage.removeItem('benefitbuddy_admin_key'); setIsAuthenticated(false); }} className="border-[#E8DDCF]">
             Logout
           </Button>
         </div>
@@ -266,38 +266,38 @@ function AdminContent() {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
+          <Card className="border-[#E8DDCF]">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-blue-600">{submissions.length}</div>
+              <div className="text-3xl font-bold text-[#D08C60]">{submissions.length}</div>
               <div className="text-muted">Total Submissions</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-[#E8DDCF]">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-blue-500">{submissions.filter(s => s.status === 'new').length}</div>
+              <div className="text-3xl font-bold text-[#D08C60]">{submissions.filter(s => s.status === 'new').length}</div>
               <div className="text-muted">New</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-[#E8DDCF]">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-yellow-500">{submissions.filter(s => s.status === 'contacted').length}</div>
+              <div className="text-3xl font-bold text-yellow-600">{submissions.filter(s => s.status === 'contacted').length}</div>
               <div className="text-muted">Contacted</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-[#E8DDCF]">
             <CardContent className="p-4">
-              <div className="text-3xl font-bold text-green-500">{submissions.filter(s => s.status === 'closed').length}</div>
+              <div className="text-3xl font-bold text-green-600">{submissions.filter(s => s.status === 'closed').length}</div>
               <div className="text-muted">Closed</div>
             </CardContent>
           </Card>
         </div>
 
         {/* Filters & Actions */}
-        <Card className="mb-6">
+        <Card className="mb-6 border-[#E8DDCF]">
           <CardContent className="p-4">
             <div className="flex flex-wrap gap-4 items-end">
               <div className="flex-1 min-w-[200px]">
-                <Label htmlFor="search">Search</Label>
+                <Label htmlFor="search" className="text-[#3D3530]">Search</Label>
                 <div className="relative mt-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                   <Input
@@ -305,14 +305,14 @@ function AdminContent() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search by ZIP, email, phone, name..."
-                    className="pl-10"
+                    className="pl-10 border-[#E8DDCF]"
                   />
                 </div>
               </div>
               <div className="w-40">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status" className="text-[#3D3530]">Status</Label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="mt-1">
+                  <SelectTrigger className="mt-1 border-[#E8DDCF]">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
@@ -323,11 +323,11 @@ function AdminContent() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={fetchSubmissions} disabled={loading}>
+              <Button onClick={fetchSubmissions} disabled={loading} className="bg-[#D08C60] hover:bg-[#B76E45]">
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                 <span className="ml-2">Refresh</span>
               </Button>
-              <Button variant="outline" onClick={handleExport}>
+              <Button variant="outline" onClick={handleExport} className="border-[#E8DDCF]">
                 <Download className="w-4 h-4 mr-2" />
                 Export CSV
               </Button>
@@ -336,18 +336,18 @@ function AdminContent() {
         </Card>
 
         {/* Submissions Table */}
-        <Card>
+        <Card className="border-[#E8DDCF]">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>ZIP</TableHead>
-                  <TableHead>Matched</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-[#E8DDCF]">
+                  <TableHead className="text-[#3D3530]">Date</TableHead>
+                  <TableHead className="text-[#3D3530]">Name</TableHead>
+                  <TableHead className="text-[#3D3530]">Contact</TableHead>
+                  <TableHead className="text-[#3D3530]">ZIP</TableHead>
+                  <TableHead className="text-[#3D3530]">Matched</TableHead>
+                  <TableHead className="text-[#3D3530]">Status</TableHead>
+                  <TableHead className="text-right text-[#3D3530]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -359,7 +359,7 @@ function AdminContent() {
                   </TableRow>
                 ) : (
                   submissions.map((sub) => (
-                    <TableRow key={sub.id}>
+                    <TableRow key={sub.id} className="border-[#E8DDCF]">
                       <TableCell className="whitespace-nowrap">
                         {new Date(sub.created_at).toLocaleDateString()}
                       </TableCell>
@@ -384,6 +384,7 @@ function AdminContent() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setSelectedSubmission(sub)}
+                            className="text-[#D08C60] hover:text-[#B76E45]"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -410,7 +411,7 @@ function AdminContent() {
       <Dialog open={!!selectedSubmission} onOpenChange={() => setSelectedSubmission(null)}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submission Details</DialogTitle>
+            <DialogTitle className="text-[#3D3530]">Submission Details</DialogTitle>
             <DialogDescription>
               ID: {selectedSubmission?.id}
             </DialogDescription>
@@ -420,63 +421,63 @@ function AdminContent() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted">Name</Label>
-                  <p className="font-medium">{selectedSubmission.full_name || '-'}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.full_name || '-'}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Date</Label>
-                  <p className="font-medium">{new Date(selectedSubmission.created_at).toLocaleString()}</p>
+                  <p className="font-medium text-[#3D3530]">{new Date(selectedSubmission.created_at).toLocaleString()}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Email</Label>
-                  <p className="font-medium">{selectedSubmission.email || '-'}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.email || '-'}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Phone</Label>
-                  <p className="font-medium">{selectedSubmission.phone || '-'}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.phone || '-'}</p>
                 </div>
                 <div>
                   <Label className="text-muted">ZIP Code</Label>
-                  <p className="font-medium">{selectedSubmission.zip_code}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.zip_code}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Age Range</Label>
-                  <p className="font-medium">{selectedSubmission.age_range}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.age_range}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Household Size</Label>
-                  <p className="font-medium">{selectedSubmission.household_size}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.household_size}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Monthly Income</Label>
-                  <p className="font-medium">{selectedSubmission.monthly_income_range}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.monthly_income_range}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Employment</Label>
-                  <p className="font-medium">{selectedSubmission.employment_status}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.employment_status}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Veteran</Label>
-                  <p className="font-medium">{selectedSubmission.veteran}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.veteran}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Disability</Label>
-                  <p className="font-medium">{selectedSubmission.disability}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.disability}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Student</Label>
-                  <p className="font-medium">{selectedSubmission.student}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.student}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Children/Pregnant</Label>
-                  <p className="font-medium">{selectedSubmission.pregnant_or_children}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.pregnant_or_children}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Housing</Label>
-                  <p className="font-medium">{selectedSubmission.housing_status}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.housing_status}</p>
                 </div>
                 <div>
                   <Label className="text-muted">Has Insurance</Label>
-                  <p className="font-medium">{selectedSubmission.has_health_insurance}</p>
+                  <p className="font-medium text-[#3D3530]">{selectedSubmission.has_health_insurance}</p>
                 </div>
               </div>
               
@@ -484,7 +485,7 @@ function AdminContent() {
                 <Label className="text-muted">Matched Programs</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {selectedSubmission.matched_benefits?.map(b => (
-                    <span key={b} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{b}</span>
+                    <span key={b} className="px-2 py-1 bg-[#FFF8F0] text-[#D08C60] border border-[#E8DDCF] rounded text-sm">{b}</span>
                   ))}
                 </div>
               </div>
@@ -496,7 +497,7 @@ function AdminContent() {
                   onValueChange={(val) => handleStatusChange(selectedSubmission.id, val)}
                   disabled={actionLoading}
                 >
-                  <SelectTrigger className="mt-1 w-40">
+                  <SelectTrigger className="mt-1 w-40 border-[#E8DDCF]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -515,13 +516,13 @@ function AdminContent() {
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Submission?</DialogTitle>
+            <DialogTitle className="text-[#3D3530]">Delete Submission?</DialogTitle>
             <DialogDescription>
               This action cannot be undone. The submission will be permanently deleted.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} className="border-[#E8DDCF]">
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={actionLoading}>
@@ -538,8 +539,8 @@ function AdminContent() {
 export default function AdminPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F1E9]">
+        <Loader2 className="w-8 h-8 animate-spin text-[#D08C60]" />
       </div>
     }>
       <AdminContent />

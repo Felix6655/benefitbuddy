@@ -9,17 +9,17 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-[#F8F1E9]">
+      <header className="bg-white shadow-sm border-b border-[#E8DDCF]">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#D08C60] rounded-full flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-blue-900">BenefitBuddy</span>
+            <span className="text-xl font-bold text-[#3D3530]">BenefitBuddy</span>
           </Link>
           <Link href="/">
-            <Button variant="ghost">
+            <Button variant="ghost" className="text-[#6B625A] hover:text-[#3D3530]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -28,15 +28,15 @@ export default function TermsPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">Terms of Service</h1>
+        <h1 className="text-4xl font-bold mb-8 text-[#3D3530]">Terms of Service</h1>
         
         <div className="prose prose-lg max-w-none">
           <p className="text-muted text-lg mb-8">
             Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
 
-          <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-4 mb-8">
-            <p className="text-yellow-800">
+          <div className="bg-[#FEF3E2] border border-[#E8DDCF] rounded-lg p-4 mb-8">
+            <p className="text-[#8B6914]">
               <strong>⚠️ Important Disclaimer:</strong> BenefitBuddy is NOT affiliated with Medicare, 
               Medicaid, Social Security Administration, or any other government agency. This is an 
               informational tool only and does not constitute legal, medical, or financial advice.
@@ -44,7 +44,7 @@ export default function TermsPage() {
           </div>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Acceptance of Terms</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Acceptance of Terms</h2>
             <p className="text-muted senior-text">
               By accessing or using BenefitBuddy, you agree to be bound by these Terms of Service. 
               If you do not agree to these terms, please do not use our service.
@@ -52,7 +52,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Description of Service</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Description of Service</h2>
             <p className="text-muted senior-text">
               BenefitBuddy is a free informational tool that helps users identify government 
               assistance programs they may be eligible for. We provide general guidance and 
@@ -62,7 +62,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">No Government Affiliation</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">No Government Affiliation</h2>
             <p className="text-muted senior-text">
               BenefitBuddy is an independent service and is not affiliated with, endorsed by, 
               or connected to any federal, state, or local government agency. All benefit 
@@ -71,7 +71,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Accuracy of Information</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Accuracy of Information</h2>
             <p className="text-muted senior-text">
               While we strive to provide accurate and up-to-date information, benefit 
               programs change frequently. The information provided is for general guidance 
@@ -81,7 +81,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Limitation of Liability</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Limitation of Liability</h2>
             <p className="text-muted senior-text">
               BenefitBuddy and its operators are not liable for any damages arising from 
               your use of this service, including but not limited to missed benefits, 
@@ -91,7 +91,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">User Responsibilities</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">User Responsibilities</h2>
             <p className="text-muted senior-text">
               You agree to:
             </p>
@@ -104,7 +104,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Changes to Terms</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Changes to Terms</h2>
             <p className="text-muted senior-text">
               We reserve the right to modify these terms at any time. Continued use of 
               BenefitBuddy after changes constitutes acceptance of the new terms.
@@ -112,7 +112,7 @@ export default function TermsPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Contact</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Contact</h2>
             <p className="text-muted senior-text">
               For questions about these terms, please contact us through the website.
             </p>
@@ -120,7 +120,7 @@ export default function TermsPage() {
         </div>
       </main>
 
-      <footer className="bg-gray-100 border-t py-6">
+      <footer className="bg-[#FFF8F0] border-t border-[#E8DDCF] py-6">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-muted text-sm">
             © {new Date().getFullYear()} BenefitBuddy. For informational purposes only.

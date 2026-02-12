@@ -9,17 +9,17 @@ export const metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white shadow-sm border-b">
+    <div className="min-h-screen bg-[#F8F1E9]">
+      <header className="bg-white shadow-sm border-b border-[#E8DDCF]">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#D08C60] rounded-full flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-blue-900">BenefitBuddy</span>
+            <span className="text-xl font-bold text-[#3D3530]">BenefitBuddy</span>
           </Link>
           <Link href="/">
-            <Button variant="ghost">
+            <Button variant="ghost" className="text-[#6B625A] hover:text-[#3D3530]">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-8 text-gray-900">Privacy Policy</h1>
+        <h1 className="text-4xl font-bold mb-8 text-[#3D3530]">Privacy Policy</h1>
         
         <div className="prose prose-lg max-w-none">
           <p className="text-muted text-lg mb-8">
@@ -36,7 +36,7 @@ export default function PrivacyPage() {
           </p>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Information We Collect</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Information We Collect</h2>
             <p className="text-muted senior-text">
               BenefitBuddy collects minimal information to help you find benefits you may qualify for. 
               This includes optional contact information (name, email, phone) and required screening 
@@ -45,7 +45,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">How We Use Your Information</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">How We Use Your Information</h2>
             <p className="text-muted senior-text">
               Your information is used solely to:
             </p>
@@ -57,7 +57,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Information Sharing</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Information Sharing</h2>
             <p className="text-muted senior-text">
               We do not sell, trade, or share your personal information with third parties 
               for marketing purposes. We may share anonymized, aggregated data for research 
@@ -66,7 +66,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Data Security</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Data Security</h2>
             <p className="text-muted senior-text">
               We implement reasonable security measures to protect your information. 
               However, no internet transmission is completely secure, and we cannot 
@@ -75,7 +75,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Your Rights</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Your Rights</h2>
             <p className="text-muted senior-text">
               You have the right to:
             </p>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Cookies</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Cookies</h2>
             <p className="text-muted senior-text">
               We use minimal cookies necessary for the site to function. We do not use 
               tracking cookies for advertising purposes.
@@ -95,7 +95,7 @@ export default function PrivacyPage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">Contact Us</h2>
+            <h2 className="text-2xl font-bold mb-4 text-[#3D3530]">Contact Us</h2>
             <p className="text-muted senior-text">
               If you have questions about this privacy policy or want to exercise your 
               data rights, please contact us through the website.
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
         </div>
       </main>
 
-      <footer className="bg-gray-100 border-t py-6">
+      <footer className="bg-[#FFF8F0] border-t border-[#E8DDCF] py-6">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-muted text-sm">
             © {new Date().getFullYear()} BenefitBuddy. For informational purposes only.
