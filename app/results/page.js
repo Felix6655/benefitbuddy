@@ -19,6 +19,7 @@ import {
   Users,
   Calendar,
 } from 'lucide-react';
+import { getSnapStateApplyUrl, getMedicaidHelpUrl, OFFICIAL_PROGRAM_URLS, getStateNameFromAbbr } from '@/lib/stateLinks';
 
 const STORAGE_KEY = 'benefitbuddy_quiz';
 
