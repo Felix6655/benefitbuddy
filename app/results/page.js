@@ -1249,6 +1249,16 @@ export default function ResultsPage() {
                 </div>
               </section>
             )}
+
+            {/* Medicare Lead Capture CTA - Show for seniors or Medicare matches */}
+            {showMedicareCTA && (
+              <section className="mb-10">
+                <MedicareCTA 
+                  onOpenModal={() => setIsLeadModalOpen(true)} 
+                  userState={normalizedData?.state}
+                />
+              </section>
+            )}
           </>
         )}
 
