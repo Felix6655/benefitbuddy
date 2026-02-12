@@ -255,7 +255,7 @@ function AdminContent() {
               <span className="text-xl font-bold text-blue-900">BenefitBuddy</span>
             </Link>
             <span className="text-gray-400">|</span>
-            <span className="text-gray-600 font-medium">Admin Panel</span>
+            <span className="text-muted font-medium">Admin Panel</span>
           </div>
           <Button variant="outline" onClick={() => { localStorage.removeItem('benefitbuddy_admin_key'); setIsAuthenticated(false); }}>
             Logout
@@ -269,25 +269,25 @@ function AdminContent() {
           <Card>
             <CardContent className="p-4">
               <div className="text-3xl font-bold text-blue-600">{submissions.length}</div>
-              <div className="text-gray-600">Total Submissions</div>
+              <div className="text-muted">Total Submissions</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-3xl font-bold text-blue-500">{submissions.filter(s => s.status === 'new').length}</div>
-              <div className="text-gray-600">New</div>
+              <div className="text-muted">New</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-3xl font-bold text-yellow-500">{submissions.filter(s => s.status === 'contacted').length}</div>
-              <div className="text-gray-600">Contacted</div>
+              <div className="text-muted">Contacted</div>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-4">
               <div className="text-3xl font-bold text-green-500">{submissions.filter(s => s.status === 'closed').length}</div>
-              <div className="text-gray-600">Closed</div>
+              <div className="text-muted">Closed</div>
             </CardContent>
           </Card>
         </div>
@@ -299,7 +299,7 @@ function AdminContent() {
               <div className="flex-1 min-w-[200px]">
                 <Label htmlFor="search">Search</Label>
                 <div className="relative mt-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                   <Input
                     id="search"
                     value={searchQuery}
@@ -353,7 +353,7 @@ function AdminContent() {
               <TableBody>
                 {submissions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted">
                       No submissions found
                     </TableCell>
                   </TableRow>
@@ -419,69 +419,69 @@ function AdminContent() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-gray-500">Name</Label>
+                  <Label className="text-muted">Name</Label>
                   <p className="font-medium">{selectedSubmission.full_name || '-'}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Date</Label>
+                  <Label className="text-muted">Date</Label>
                   <p className="font-medium">{new Date(selectedSubmission.created_at).toLocaleString()}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Email</Label>
+                  <Label className="text-muted">Email</Label>
                   <p className="font-medium">{selectedSubmission.email || '-'}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Phone</Label>
+                  <Label className="text-muted">Phone</Label>
                   <p className="font-medium">{selectedSubmission.phone || '-'}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">ZIP Code</Label>
+                  <Label className="text-muted">ZIP Code</Label>
                   <p className="font-medium">{selectedSubmission.zip_code}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Age Range</Label>
+                  <Label className="text-muted">Age Range</Label>
                   <p className="font-medium">{selectedSubmission.age_range}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Household Size</Label>
+                  <Label className="text-muted">Household Size</Label>
                   <p className="font-medium">{selectedSubmission.household_size}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Monthly Income</Label>
+                  <Label className="text-muted">Monthly Income</Label>
                   <p className="font-medium">{selectedSubmission.monthly_income_range}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Employment</Label>
+                  <Label className="text-muted">Employment</Label>
                   <p className="font-medium">{selectedSubmission.employment_status}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Veteran</Label>
+                  <Label className="text-muted">Veteran</Label>
                   <p className="font-medium">{selectedSubmission.veteran}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Disability</Label>
+                  <Label className="text-muted">Disability</Label>
                   <p className="font-medium">{selectedSubmission.disability}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Student</Label>
+                  <Label className="text-muted">Student</Label>
                   <p className="font-medium">{selectedSubmission.student}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Children/Pregnant</Label>
+                  <Label className="text-muted">Children/Pregnant</Label>
                   <p className="font-medium">{selectedSubmission.pregnant_or_children}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Housing</Label>
+                  <Label className="text-muted">Housing</Label>
                   <p className="font-medium">{selectedSubmission.housing_status}</p>
                 </div>
                 <div>
-                  <Label className="text-gray-500">Has Insurance</Label>
+                  <Label className="text-muted">Has Insurance</Label>
                   <p className="font-medium">{selectedSubmission.has_health_insurance}</p>
                 </div>
               </div>
               
               <div>
-                <Label className="text-gray-500">Matched Programs</Label>
+                <Label className="text-muted">Matched Programs</Label>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {selectedSubmission.matched_benefits?.map(b => (
                     <span key={b} className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{b}</span>
@@ -490,7 +490,7 @@ function AdminContent() {
               </div>
               
               <div>
-                <Label className="text-gray-500">Status</Label>
+                <Label className="text-muted">Status</Label>
                 <Select 
                   value={selectedSubmission.status} 
                   onValueChange={(val) => handleStatusChange(selectedSubmission.id, val)}

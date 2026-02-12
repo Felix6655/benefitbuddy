@@ -60,7 +60,7 @@ function ResultsContent() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-xl text-gray-600">Loading your results...</p>
+          <p className="text-xl text-muted">Loading your results...</p>
         </div>
       </div>
     );
@@ -73,7 +73,7 @@ function ResultsContent() {
           <CardContent className="p-8 text-center">
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Unable to Load Results</h1>
-            <p className="text-gray-600 mb-6">{error}</p>
+            <p className="text-muted mb-6">{error}</p>
             <div className="flex flex-col gap-3">
               <Link href="/start">
                 <Button className="w-full text-lg h-12">
@@ -117,7 +117,7 @@ function ResultsContent() {
       {/* Print Header */}
       <div className="hidden print-only print:block p-4 border-b">
         <h1 className="text-2xl font-bold">BenefitBuddy - Your Results</h1>
-        <p className="text-gray-600">Generated on {new Date().toLocaleDateString()}</p>
+        <p className="text-muted">Generated on {new Date().toLocaleDateString()}</p>
       </div>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
@@ -126,7 +126,7 @@ function ResultsContent() {
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
             🎉 Your Recommended Programs
           </h1>
-          <p className="text-xl text-gray-600 senior-text">
+          <p className="text-xl text-muted senior-text">
             Based on your answers, you may be eligible for {matchedBenefits.length} program{matchedBenefits.length !== 1 ? 's' : ''}.
           </p>
         </div>
@@ -143,10 +143,10 @@ function ResultsContent() {
         {matchedBenefits.length === 0 ? (
           <Card className="border-2">
             <CardContent className="p-8 text-center">
-              <p className="text-xl text-gray-600 mb-4">
+              <p className="text-xl text-muted mb-4">
                 Based on your answers, we didn't find specific programs to recommend.
               </p>
-              <p className="text-gray-500 mb-6">
+              <p className="text-muted mb-6">
                 This doesn't mean you're not eligible for assistance. Visit Benefits.gov for a complete search.
               </p>
               <a href="https://www.benefits.gov" target="_blank" rel="noopener noreferrer">
@@ -168,7 +168,7 @@ function ResultsContent() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <p className="text-gray-700 senior-text">{benefit.description}</p>
+                  <p className="text-muted senior-text">{benefit.description}</p>
                   
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-blue-800 font-medium">
@@ -180,7 +180,7 @@ function ResultsContent() {
                     <h4 className="font-bold text-lg mb-2 text-gray-900">Next Steps:</h4>
                     <ol className="list-decimal list-inside space-y-2">
                       {benefit.nextSteps.map((step, i) => (
-                        <li key={i} className="text-gray-700 senior-text">{step}</li>
+                        <li key={i} className="text-muted senior-text">{step}</li>
                       ))}
                     </ol>
                   </div>
@@ -252,7 +252,7 @@ function ResultsContent() {
       {/* Footer */}
       <footer className="bg-gray-100 border-t mt-12 py-6 no-print">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-gray-600 text-sm">
+          <p className="text-muted text-sm">
             BenefitBuddy is not affiliated with any government agency. 
             For official information, please visit the agency websites directly.
           </p>
@@ -268,7 +268,7 @@ export default function ResultsPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-xl text-gray-600">Loading your results...</p>
+          <p className="text-xl text-muted">Loading your results...</p>
         </div>
       </div>
     }>
