@@ -14,315 +14,409 @@ import {
   ShieldCheck,
   CheckCircle,
   Info,
-  ArrowLeft,
+  Edit,
+  MapPin,
+  Users,
+  Calendar,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'benefitbuddy_quiz';
 
-// Program definitions with official links
+// ============================================
+// PROGRAM DEFINITIONS
+// ============================================
 const PROGRAMS = {
   snap: {
     id: 'snap',
     name: 'SNAP (Food Assistance)',
     icon: '🛒',
-    description: 'The Supplemental Nutrition Assistance Program helps low-income households buy groceries.',
+    description: 'The Supplemental Nutrition Assistance Program provides monthly benefits to help low-income households buy groceries.',
     officialLink: 'https://www.fns.usda.gov/snap/state-directory',
-    color: '#4CAF50',
   },
   medicaid: {
     id: 'medicaid',
     name: 'Medicaid',
     icon: '🏥',
-    description: 'Medicaid provides free or low-cost health coverage for eligible low-income adults and families.',
+    description: 'Medicaid offers free or low-cost health coverage for eligible low-income adults, children, and families.',
     officialLink: 'https://www.medicaid.gov/about-us/beneficiary-resources/index.html',
-    color: '#2196F3',
   },
   medicare_savings: {
     id: 'medicare_savings',
     name: 'Medicare Savings Programs',
     icon: '💊',
-    description: 'These programs help pay Medicare premiums, deductibles, and copays for seniors with limited income.',
+    description: 'These programs help seniors with limited income pay Medicare premiums, deductibles, and copays.',
     officialLink: 'https://www.medicare.gov/medicare-savings-programs',
-    color: '#9C27B0',
   },
   housing: {
     id: 'housing',
     name: 'Housing Assistance (HUD)',
     icon: '🏠',
-    description: 'HUD offers rental assistance programs including Section 8 vouchers and public housing.',
+    description: 'HUD offers rental assistance programs including Section 8 vouchers and public housing options.',
     officialLink: 'https://www.hud.gov/topics/rental_assistance',
-    color: '#FF9800',
   },
   liheap: {
     id: 'liheap',
     name: 'Energy Assistance (LIHEAP)',
     icon: '💡',
-    description: 'LIHEAP helps low-income households pay heating and cooling bills.',
+    description: 'LIHEAP helps low-income households pay for heating and cooling their homes.',
     officialLink: 'https://www.acf.hhs.gov/ocs/low-income-home-energy-assistance-program-liheap',
-    color: '#FFC107',
   },
   va_benefits: {
     id: 'va_benefits',
     name: 'VA Benefits',
     icon: '🎖️',
-    description: 'Veterans may qualify for healthcare, disability compensation, pension, and other benefits.',
+    description: 'Veterans may qualify for healthcare, disability compensation, pension, education benefits, and more.',
     officialLink: 'https://www.va.gov/',
-    color: '#3F51B5',
   },
   chip: {
     id: 'chip',
     name: 'CHIP (Children\'s Health Insurance)',
     icon: '👶',
-    description: 'CHIP provides low-cost health coverage for children in families who earn too much for Medicaid.',
+    description: 'CHIP provides low-cost health coverage for children in families who earn too much for Medicaid but cannot afford private insurance.',
     officialLink: 'https://www.medicaid.gov/about-us/beneficiary-resources/index.html',
-    color: '#E91E63',
   },
   ssi: {
     id: 'ssi',
     name: 'SSI (Supplemental Security Income)',
     icon: '🤝',
-    description: 'SSI provides monthly payments to people with limited income who are 65+, blind, or disabled.',
+    description: 'SSI provides monthly cash payments to people with limited income and resources who are 65+, blind, or disabled.',
     officialLink: 'https://www.ssa.gov/ssi/',
-    color: '#607D8B',
   },
   wic: {
     id: 'wic',
     name: 'WIC (Women, Infants & Children)',
     icon: '🍼',
-    description: 'WIC provides nutritious foods, nutrition education, and health referrals for pregnant women and young children.',
+    description: 'WIC provides nutritious foods, nutrition education, breastfeeding support, and health referrals for pregnant women and young children.',
     officialLink: 'https://www.fns.usda.gov/wic',
-    color: '#FF5722',
   },
 };
 
-// Calculate income threshold based on household size
-function getIncomeThreshold(householdSize) {
-  const baseThreshold = 25000;
-  const perPersonAddition = 9000;
-  return baseThreshold + (Math.max(1, householdSize) - 1) * perPersonAddition;
+// ============================================
+// DATA NORMALIZATION HELPERS
+// ============================================
+
+/**
+ * Normalize the quiz data to handle variations in field names and values
+ */
+function normalizeQuizData(raw) {
+  if (!raw || typeof raw !== 'object') {
+    return null;
+  }
+
+  // Helper to check if value indicates "under 18"
+  const isUnder18 = (val) => {
+    if (!val) return false;
+    const v = String(val).toLowerCase().replace(/[^a-z0-9]/g, '');
+    return v.includes('under18') || v === 'under_18' || v === 'under18';
+  };
+
+  // Helper to check if value indicates "65+"
+  const is65Plus = (val) => {
+    if (!val) return false;
+    const v = String(val).toLowerCase().replace(/[^a-z0-9+]/g, '');
+    return v.includes('65') || v.includes('senior') || v === '65plus' || v === '65_plus';
+  };
+
+  // Helper to parse boolean-like values
+  const toBool = (val) => {
+    if (val === true || val === 'yes' || val === 'true' || val === '1') return true;
+    return false;
+  };
+
+  // Helper to parse number
+  const toNumber = (val) => {
+    if (val === null || val === undefined || val === '') return null;
+    const num = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
+    return isNaN(num) ? null : num;
+  };
+
+  // Helper to normalize needs array
+  const normalizeNeeds = (needs) => {
+    if (!needs) return [];
+    if (!Array.isArray(needs)) return [];
+    return needs.map(n => {
+      const v = String(n).toLowerCase().replace(/[^a-z]/g, '');
+      if (v.includes('food')) return 'food';
+      if (v.includes('health') || v.includes('medical')) return 'healthcare';
+      if (v.includes('housing') || v.includes('rent')) return 'housing';
+      if (v.includes('util') || v.includes('energy') || v.includes('electric')) return 'utilities';
+      if (v.includes('cash') || v.includes('money')) return 'cash';
+      return v;
+    });
+  };
+
+  // Normalize age range
+  let ageCategory = '18to64'; // default
+  const ageVal = raw.age_range || raw.ageRange || raw.age || '';
+  if (isUnder18(ageVal)) {
+    ageCategory = 'under18';
+  } else if (is65Plus(ageVal)) {
+    ageCategory = '65plus';
+  }
+
+  // Normalize income mode
+  let incomeMode = 'monthly';
+  const modeVal = raw.income_type || raw.incomeMode || raw.incomeType || '';
+  if (String(modeVal).toLowerCase().includes('year')) {
+    incomeMode = 'yearly';
+  }
+
+  return {
+    zip: raw.zip_code || raw.zip || raw.zipCode || '',
+    state: raw.state || '',
+    householdSize: toNumber(raw.household_size || raw.householdSize) || 1,
+    ageRange: ageCategory,
+    incomeMode: incomeMode,
+    income: toNumber(raw.income_amount || raw.income || raw.incomeAmount),
+    housing: (raw.housing_status || raw.housing || '').toLowerCase() === 'own' ? 'own' : 'rent',
+    disabled: toBool(raw.has_disability || raw.disabled || raw.disability),
+    veteran: toBool(raw.is_veteran || raw.veteran),
+    needs: normalizeNeeds(raw.needs),
+  };
 }
 
-// Convert income to yearly amount
+/**
+ * Calculate yearly income from normalized data
+ */
 function getYearlyIncome(data) {
-  if (!data.income_amount) return null;
-  const amount = parseFloat(data.income_amount);
-  if (isNaN(amount)) return null;
-  return data.income_type === 'yearly' ? amount : amount * 12;
+  if (data.income === null) return null;
+  return data.incomeMode === 'yearly' ? data.income : data.income * 12;
 }
 
-// Check if income is considered "low"
-function isLowIncome(data) {
-  const yearlyIncome = getYearlyIncome(data);
-  if (yearlyIncome === null) return false; // Can't determine
-  const householdSize = parseInt(data.household_size) || 1;
-  const threshold = getIncomeThreshold(householdSize);
-  return yearlyIncome < threshold;
+/**
+ * Calculate low-income threshold based on household size
+ */
+function getLowIncomeThreshold(householdSize) {
+  return 25000 + (Math.max(1, householdSize) - 1) * 9000;
 }
 
-// Check if income is "very low" (for SSI)
-function isVeryLowIncome(data) {
-  const yearlyIncome = getYearlyIncome(data);
-  if (yearlyIncome === null) return false;
-  const householdSize = parseInt(data.household_size) || 1;
-  const threshold = getIncomeThreshold(householdSize) * 0.5; // 50% of low-income threshold
-  return yearlyIncome < threshold;
-}
+// ============================================
+// MATCHING LOGIC
+// ============================================
 
-// Main matching function
 function matchPrograms(data) {
   const likelyMatches = [];
   const alsoCheck = [];
-  const needs = data.needs || [];
-  const ageRange = data.age_range || '';
-  const isVeteran = data.is_veteran === 'yes';
-  const hasDisability = data.has_disability === 'yes';
-  const householdSize = parseInt(data.household_size) || 1;
-  const state = data.state || '';
+  const addedToLikely = new Set();
+  const addedToAlsoCheck = new Set();
+
   const yearlyIncome = getYearlyIncome(data);
-  const lowIncome = isLowIncome(data);
-  const veryLowIncome = isVeryLowIncome(data);
+  const threshold = getLowIncomeThreshold(data.householdSize);
+  const veryLowThreshold = threshold * 0.65;
+  const isLowIncome = yearlyIncome !== null && yearlyIncome < threshold;
+  const isVeryLowIncome = yearlyIncome !== null && yearlyIncome < veryLowThreshold;
 
-  // Helper to create program match with reasons
-  const createMatch = (programId, reasons, requirements) => ({
-    program: PROGRAMS[programId],
-    reasons,
-    requirements,
-  });
+  // Helper to add to likely
+  const addLikely = (programId, reasons, requirements) => {
+    if (!addedToLikely.has(programId)) {
+      addedToLikely.add(programId);
+      likelyMatches.push({
+        program: PROGRAMS[programId],
+        reasons,
+        requirements,
+      });
+    }
+  };
 
-  // SNAP - Food help
-  if (needs.includes('food_help')) {
-    likelyMatches.push(createMatch('snap', [
+  // Helper to add to also check
+  const addAlsoCheck = (programId, reasons, requirements) => {
+    if (!addedToLikely.has(programId) && !addedToAlsoCheck.has(programId)) {
+      addedToAlsoCheck.add(programId);
+      alsoCheck.push({
+        program: PROGRAMS[programId],
+        reasons,
+        requirements,
+      });
+    }
+  };
+
+  // Standard requirements
+  const baseRequirements = [
+    'Photo ID (driver\'s license, state ID, or passport)',
+    'Proof of address (utility bill, lease, or mail)',
+  ];
+  const incomeRequirements = [
+    ...baseRequirements,
+    'Proof of income (pay stubs, tax return, or benefit letters)',
+    'Additional documents may be requested depending on program',
+  ];
+
+  // ===== LIKELY MATCHES =====
+
+  // SNAP - if needs includes food
+  if (data.needs.includes('food')) {
+    addLikely('snap', [
       'You indicated you need help with food',
-      lowIncome ? 'Your income may fall within eligibility limits' : 'Income limits vary by state',
-      `Household size of ${householdSize} is considered in eligibility`,
+      isLowIncome ? 'Your income falls within typical eligibility limits' : 'Income limits vary by state and household size',
+      `Your household size (${data.householdSize}) is factored into eligibility`,
+    ], incomeRequirements);
+  }
+
+  // Medicaid - if needs healthcare AND low income
+  if (data.needs.includes('healthcare') && yearlyIncome !== null && isLowIncome) {
+    addLikely('medicaid', [
+      'You indicated you need help with healthcare',
+      'Your income appears to fall within Medicaid eligibility limits',
+      data.state ? `${data.state} has its own Medicaid program` : 'Each state has different Medicaid rules',
     ], [
-      'Proof of identity',
-      'Proof of residency',
-      'Proof of income (pay stubs, benefit letters)',
+      ...baseRequirements,
+      'Proof of income',
+      'Proof of citizenship or immigration status',
       'Additional documents may be requested depending on program',
-    ]));
+    ]);
   }
 
-  // Medicaid - Healthcare for low income
-  if (needs.includes('healthcare') && ageRange !== 'under_18') {
-    if (lowIncome || yearlyIncome === null) {
-      likelyMatches.push(createMatch('medicaid', [
-        'You indicated you need help with healthcare',
-        lowIncome ? 'Your income appears to fall within Medicaid limits' : 'Income limits vary by state',
-        state ? `${state} has its own Medicaid program with specific rules` : 'Each state has different Medicaid rules',
-      ], [
-        'Proof of identity',
-        'Proof of citizenship or immigration status',
-        'Proof of income',
-        'Additional documents may be requested depending on program',
-      ]));
-    }
-  }
-
-  // CHIP - Children's healthcare (moves to LIKELY if under 18 + healthcare need)
-  if (ageRange === 'under_18') {
-    if (needs.includes('healthcare')) {
-      likelyMatches.push(createMatch('chip', [
-        'You are under 18 years old',
-        'You indicated you need help with healthcare',
-        'CHIP covers children in families who earn too much for Medicaid',
-      ], [
-        'Child\'s birth certificate',
-        'Proof of family income',
-        'Proof of residency',
-        'Additional documents may be requested depending on program',
-      ]));
-    } else {
-      alsoCheck.push(createMatch('chip', [
-        'You are under 18 years old',
-        'CHIP may be available even if you have some coverage',
-      ], [
-        'Child\'s birth certificate',
-        'Proof of family income',
-        'Additional documents may be requested depending on program',
-      ]));
-    }
-  }
-
-  // Medicare Savings Programs - 65+
-  if (ageRange === '65_plus') {
-    likelyMatches.push(createMatch('medicare_savings', [
-      'You are 65 or older',
-      'These programs help with Medicare costs',
-      lowIncome ? 'Your income may qualify you for premium assistance' : 'Income limits vary by program type',
+  // Medicare Savings - if 65+
+  if (data.ageRange === '65plus') {
+    addLikely('medicare_savings', [
+      'You are 65 years or older',
+      'These programs help reduce Medicare costs',
+      isLowIncome ? 'Your income may qualify you for assistance' : 'Income limits vary by program type',
     ], [
-      'Medicare card',
+      'Medicare card or Medicare number',
+      ...baseRequirements,
       'Proof of income and assets',
-      'Proof of residency',
       'Additional documents may be requested depending on program',
-    ]));
+    ]);
   }
 
-  // Housing assistance
-  if (needs.includes('housing')) {
-    likelyMatches.push(createMatch('housing', [
+  // Housing - if needs housing
+  if (data.needs.includes('housing')) {
+    addLikely('housing', [
       'You indicated you need help with housing',
-      data.housing_status === 'rent' ? 'You are currently renting' : 'Housing programs may help with various situations',
-      'Wait lists vary by location',
+      data.housing === 'rent' ? 'You currently rent your home' : 'Various housing programs may assist homeowners too',
+      'Availability and wait times vary by location',
     ], [
-      'Proof of identity for all household members',
-      'Proof of income',
-      'Rental history',
+      ...baseRequirements,
+      'Proof of income for all household members',
+      'Rental history or landlord references',
       'Additional documents may be requested depending on program',
-    ]));
+    ]);
   }
 
-  // LIHEAP - Utility assistance
-  if (needs.includes('utilities')) {
-    likelyMatches.push(createMatch('liheap', [
+  // LIHEAP - if needs utilities
+  if (data.needs.includes('utilities')) {
+    addLikely('liheap', [
       'You indicated you need help with utilities',
-      lowIncome ? 'Your income may qualify you for assistance' : 'Income limits vary by state',
-      'LIHEAP can help with heating and cooling costs',
+      isLowIncome ? 'Your income appears within LIHEAP limits' : 'Income limits vary by state',
+      'LIHEAP helps with heating and cooling costs',
     ], [
-      'Recent utility bill',
+      'Recent utility bill showing account number',
+      ...baseRequirements,
       'Proof of income',
-      'Proof of residency',
       'Additional documents may be requested depending on program',
-    ]));
+    ]);
   }
 
-  // VA Benefits - Veterans
-  if (isVeteran) {
-    likelyMatches.push(createMatch('va_benefits', [
+  // VA Benefits - if veteran
+  if (data.veteran) {
+    addLikely('va_benefits', [
       'You indicated you are a veteran',
-      'VA offers healthcare, disability, pension, and other benefits',
+      'VA benefits include healthcare, disability, pension, and education',
       'Eligibility depends on service history and discharge status',
     ], [
-      'DD-214 or separation documents',
-      'Proof of identity',
+      'DD-214 or military separation documents',
+      ...baseRequirements,
       'Medical records (for disability claims)',
       'Additional documents may be requested depending on program',
-    ]));
+    ]);
   }
 
-  // SSI - Disabled or very low income
-  if (hasDisability || veryLowIncome) {
-    const reasons = [];
-    if (hasDisability) reasons.push('You indicated you have a disability');
-    if (veryLowIncome) reasons.push('Your income appears to be very limited');
-    if (ageRange === '65_plus') reasons.push('You are 65 or older');
-    reasons.push('SSI provides monthly cash assistance');
-
-    if (hasDisability) {
-      likelyMatches.push(createMatch('ssi', reasons, [
-        'Medical records documenting disability',
-        'Proof of limited income and resources',
-        'Proof of citizenship or eligible immigration status',
-        'Additional documents may be requested depending on program',
-      ]));
-    } else {
-      alsoCheck.push(createMatch('ssi', reasons, [
-        'Proof of limited income and resources',
-        'Medical documentation (if applicable)',
-        'Additional documents may be requested depending on program',
-      ]));
-    }
-  }
-
-  // WIC - Food help for children
-  if (needs.includes('food_help') && (ageRange === 'under_18')) {
-    alsoCheck.push(createMatch('wic', [
-      'You indicated you need help with food',
-      'You are under 18',
-      'WIC serves pregnant women, new mothers, and children under 5',
+  // CHIP - if under 18 AND needs healthcare (goes to LIKELY)
+  if (data.ageRange === 'under18' && data.needs.includes('healthcare')) {
+    addLikely('chip', [
+      'You are under 18 years old',
+      'You indicated you need help with healthcare',
+      'CHIP covers children in families who earn too much for Medicaid',
     ], [
-      'Proof of identity',
+      'Child\'s birth certificate or proof of age',
+      'Proof of family income',
+      ...baseRequirements,
+      'Additional documents may be requested depending on program',
+    ]);
+  }
+
+  // ===== ALSO CHECK =====
+
+  // CHIP - if under 18 (if not already in likely)
+  if (data.ageRange === 'under18') {
+    addAlsoCheck('chip', [
+      'You are under 18 years old',
+      'CHIP may provide additional coverage options',
+      'Eligibility varies by state and family income',
+    ], [
+      'Child\'s birth certificate',
+      'Proof of family income',
+      'Additional documents may be requested depending on program',
+    ]);
+  }
+
+  // WIC - if needs food AND under 18
+  if (data.needs.includes('food') && data.ageRange === 'under18') {
+    addAlsoCheck('wic', [
+      'You are under 18 and need food assistance',
+      'WIC serves pregnant women, new mothers, and children under 5',
+      'Provides nutritious foods and nutrition education',
+    ], [
+      'Proof of identity for participant',
       'Proof of residency',
       'Proof of income',
+      'Immunization records (for children)',
       'Additional documents may be requested depending on program',
-    ]));
+    ]);
   }
 
-  // Cash assistance goes to generic info
-  if (needs.includes('cash_assistance') && !likelyMatches.find(m => m.program.id === 'ssi')) {
-    if (!alsoCheck.find(m => m.program.id === 'ssi')) {
-      alsoCheck.push(createMatch('ssi', [
-        'You indicated you need cash assistance',
-        'SSI may be available for those with limited income',
-        'Additional state programs may also be available',
-      ], [
+  // SSI - if disabled OR very low income
+  if (data.disabled || isVeryLowIncome) {
+    const reasons = [];
+    if (data.disabled) reasons.push('You indicated you have a disability');
+    if (isVeryLowIncome) reasons.push('Your income is very limited');
+    if (data.ageRange === '65plus') reasons.push('You are 65 or older');
+    reasons.push('SSI provides monthly cash assistance');
+
+    if (data.disabled) {
+      addLikely('ssi', reasons, [
+        'Medical records documenting disability',
         'Proof of limited income and resources',
+        ...baseRequirements,
         'Additional documents may be requested depending on program',
-      ]));
+      ]);
+    } else {
+      addAlsoCheck('ssi', reasons, [
+        'Proof of limited income and resources',
+        ...baseRequirements,
+        'Additional documents may be requested depending on program',
+      ]);
     }
+  }
+
+  // SSI - if needs cash (add to also check if not already)
+  if (data.needs.includes('cash')) {
+    addAlsoCheck('ssi', [
+      'You indicated you need cash assistance',
+      'SSI may be available for those with limited income',
+      'Your state may have additional cash assistance programs',
+    ], [
+      'Proof of limited income and resources',
+      ...baseRequirements,
+      'Additional documents may be requested depending on program',
+    ]);
   }
 
   return { likelyMatches, alsoCheck };
 }
 
-// Trust badge component
+// ============================================
+// UI COMPONENTS
+// ============================================
+
 function TrustBadge() {
   return (
     <div 
-      className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg mb-6"
+      className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg"
       style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}
     >
-      <ShieldCheck className="w-5 h-5" style={{ color: '#D08C60' }} />
+      <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: '#D08C60' }} />
       <span className="text-base font-medium" style={{ color: '#6B625A' }}>
         No login required. We never ask for SSN.
       </span>
@@ -330,24 +424,20 @@ function TrustBadge() {
   );
 }
 
-// Program card component
-function ProgramCard({ match, isLikely }) {
+function ProgramCard({ match }) {
   const { program, reasons, requirements } = match;
   
   return (
     <Card 
       className="border-2 overflow-hidden transition-shadow hover:shadow-lg"
-      style={{ borderColor: '#E8DDCF' }}
+      style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
     >
       <CardHeader 
         className="pb-3"
-        style={{ 
-          backgroundColor: '#FFF8F0',
-          borderBottom: '1px solid #E8DDCF',
-        }}
+        style={{ backgroundColor: '#FFF8F0', borderBottom: '1px solid #E8DDCF' }}
       >
-        <CardTitle className="flex items-center gap-3">
-          <span className="text-3xl">{program.icon}</span>
+        <CardTitle className="flex items-start gap-3">
+          <span className="text-3xl flex-shrink-0">{program.icon}</span>
           <div>
             <h3 className="text-xl font-bold" style={{ color: '#3D3530' }}>
               {program.name}
@@ -358,22 +448,25 @@ function ProgramCard({ match, isLikely }) {
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 space-y-4">
+      <CardContent className="p-6 space-y-5">
         {/* Why you might qualify */}
         <div>
-          <h4 className="text-lg font-semibold mb-2 flex items-center gap-2" style={{ color: '#3D3530' }}>
-            <CheckCircle className="w-5 h-5" style={{ color: '#4CAF50' }} />
+          <h4 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{ color: '#3D3530' }}>
+            <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#4CAF50' }} />
             Why you might qualify
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-2 ml-7">
             {reasons.map((reason, index) => (
               <li 
                 key={index} 
                 className="flex items-start gap-2 text-base"
                 style={{ color: '#6B625A' }}
               >
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#D08C60' }} />
-                {reason}
+                <span 
+                  className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: '#D08C60' }} 
+                />
+                <span>{reason}</span>
               </li>
             ))}
           </ul>
@@ -381,19 +474,22 @@ function ProgramCard({ match, isLikely }) {
 
         {/* What you may need */}
         <div>
-          <h4 className="text-lg font-semibold mb-2 flex items-center gap-2" style={{ color: '#3D3530' }}>
-            <Info className="w-5 h-5" style={{ color: '#2196F3' }} />
+          <h4 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{ color: '#3D3530' }}>
+            <Info className="w-5 h-5 flex-shrink-0" style={{ color: '#2196F3' }} />
             What you may need to apply
           </h4>
-          <ul className="space-y-2">
+          <ul className="space-y-2 ml-7">
             {requirements.map((req, index) => (
               <li 
                 key={index} 
                 className="flex items-start gap-2 text-base"
                 style={{ color: '#6B625A' }}
               >
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#E8DDCF' }} />
-                {req}
+                <span 
+                  className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" 
+                  style={{ backgroundColor: '#E8DDCF' }} 
+                />
+                <span>{req}</span>
               </li>
             ))}
           </ul>
@@ -404,10 +500,10 @@ function ProgramCard({ match, isLikely }) {
           href={program.officialLink} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="block"
+          className="block pt-2"
         >
           <Button 
-            className="w-full h-12 text-lg text-white mt-2"
+            className="w-full h-12 text-lg text-white"
             style={{ backgroundColor: '#D08C60' }}
             onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
@@ -421,21 +517,20 @@ function ProgramCard({ match, isLikely }) {
   );
 }
 
-// No data state component
-function NoDataState() {
+function EmptyState() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F8F1E9' }}>
       <Card 
         className="max-w-md w-full border-2"
-        style={{ borderColor: '#E8DDCF' }}
+        style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
       >
         <CardContent className="p-8 text-center">
           <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: '#D08C60' }} />
-          <h1 className="text-2xl font-bold mb-2" style={{ color: '#3D3530' }}>
-            No Quiz Data Found
+          <h1 className="text-2xl font-bold mb-3" style={{ color: '#3D3530' }}>
+            No Quiz Answers Found
           </h1>
           <p className="text-lg mb-6" style={{ color: '#6B625A' }}>
-            It looks like you haven't completed the quiz yet. Answer a few simple questions to see which benefits you may qualify for.
+            Please take the 3-minute quiz first to see which benefits you may qualify for.
           </p>
           <Link href="/start">
             <Button 
@@ -455,22 +550,41 @@ function NoDataState() {
   );
 }
 
-// Main Results Page Component
+function SummaryBadge({ icon: Icon, label, value }) {
+  if (!value) return null;
+  return (
+    <div 
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
+      style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}
+    >
+      <Icon className="w-4 h-4" style={{ color: '#D08C60' }} />
+      <span style={{ color: '#6B625A' }}>{label}:</span>
+      <span className="font-medium" style={{ color: '#3D3530' }}>{value}</span>
+    </div>
+  );
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
 export default function ResultsPage() {
-  const [data, setData] = useState(null);
+  const [rawData, setRawData] = useState(null);
+  const [normalizedData, setNormalizedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState({ likelyMatches: [], alsoCheck: [] });
 
-  // Load data from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Check if data has meaningful content
-        if (parsed && (parsed.zip_code || parsed.state || parsed.needs?.length > 0 || parsed.age_range)) {
-          setData(parsed);
-          setMatches(matchPrograms(parsed));
+        setRawData(parsed);
+        
+        const normalized = normalizeQuizData(parsed);
+        if (normalized && (normalized.zip || normalized.state || normalized.needs.length > 0 || normalized.ageRange !== '18to64' || normalized.veteran || normalized.disabled)) {
+          setNormalizedData(normalized);
+          setMatches(matchPrograms(normalized));
         }
       }
     } catch (error) {
@@ -495,12 +609,19 @@ export default function ResultsPage() {
     );
   }
 
-  if (!data) {
-    return <NoDataState />;
+  if (!normalizedData) {
+    return <EmptyState />;
   }
 
   const { likelyMatches, alsoCheck } = matches;
   const hasResults = likelyMatches.length > 0 || alsoCheck.length > 0;
+
+  // Format age range for display
+  const ageRangeDisplay = {
+    'under18': 'Under 18',
+    '18to64': '18-64',
+    '65plus': '65+',
+  }[normalizedData.ageRange] || normalizedData.ageRange;
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F8F1E9' }}>
@@ -519,15 +640,27 @@ export default function ResultsPage() {
             </div>
             <span className="text-xl font-bold" style={{ color: '#3D3530' }}>BenefitBuddy</span>
           </Link>
-          <Button 
-            variant="outline" 
-            onClick={handlePrint}
-            className="h-10 px-4"
-            style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print Results
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/start">
+              <Button 
+                variant="outline" 
+                className="h-10 px-4"
+                style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Answers
+              </Button>
+            </Link>
+            <Button 
+              variant="outline" 
+              onClick={handlePrint}
+              className="h-10 px-4"
+              style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -538,17 +671,27 @@ export default function ResultsPage() {
       </div>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Results Header */}
-        <div className="text-center mb-8">
+        {/* Page Title */}
+        <div className="text-center mb-6">
           <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#3D3530' }}>
-            🎉 Your Benefit Matches
+            Your Results
           </h1>
           <p className="text-xl" style={{ color: '#6B625A' }}>
             Based on your answers, here are programs you may qualify for.
           </p>
         </div>
 
-        <TrustBadge />
+        {/* Summary badges */}
+        <div className="flex flex-wrap justify-center gap-2 mb-6">
+          <SummaryBadge icon={MapPin} label="State" value={normalizedData.state} />
+          <SummaryBadge icon={Users} label="Household" value={`${normalizedData.householdSize} ${normalizedData.householdSize === 1 ? 'person' : 'people'}`} />
+          <SummaryBadge icon={Calendar} label="Age" value={ageRangeDisplay} />
+        </div>
+
+        {/* Trust Badge */}
+        <div className="mb-6">
+          <TrustBadge />
+        </div>
 
         {/* Disclaimer */}
         <div 
@@ -557,22 +700,21 @@ export default function ResultsPage() {
         >
           <p style={{ color: '#8B6914' }}>
             <strong>⚠️ Important:</strong> These are suggestions based on general eligibility guidelines. 
-            Actual eligibility is determined by each program. Always verify with official sources.
+            Actual eligibility is determined by each program's rules. Always verify with official sources.
           </p>
         </div>
 
         {!hasResults ? (
-          /* No matches found */
           <Card 
             className="border-2 text-center p-8"
-            style={{ borderColor: '#E8DDCF' }}
+            style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
           >
-            <CardContent>
+            <CardContent className="p-0">
               <p className="text-xl mb-4" style={{ color: '#6B625A' }}>
                 Based on your answers, we couldn't identify specific programs to recommend.
               </p>
               <p className="text-base mb-6" style={{ color: '#6B625A' }}>
-                This doesn't mean you're not eligible for assistance. Try the quiz again with different answers, or visit Benefits.gov for a complete search.
+                This doesn't mean you're not eligible. Try updating your answers or visit Benefits.gov for a complete search.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/start">
@@ -582,8 +724,8 @@ export default function ResultsPage() {
                     className="h-12 px-6"
                     style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
                   >
-                    <ArrowLeft className="mr-2 w-5 h-5" />
-                    Retake Quiz
+                    <Edit className="mr-2 w-5 h-5" />
+                    Edit Answers
                   </Button>
                 </Link>
                 <a href="https://www.benefits.gov" target="_blank" rel="noopener noreferrer">
@@ -604,16 +746,16 @@ export default function ResultsPage() {
             {/* Likely Matches Section */}
             {likelyMatches.length > 0 && (
               <section className="mb-10">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: '#3D3530' }}>
-                  <CheckCircle className="w-6 h-6" style={{ color: '#4CAF50' }} />
-                  Likely Matches ({likelyMatches.length})
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2" style={{ color: '#3D3530' }}>
+                  <CheckCircle className="w-7 h-7" style={{ color: '#4CAF50' }} />
+                  Likely Matches
                 </h2>
-                <p className="text-base mb-6" style={{ color: '#6B625A' }}>
-                  Programs you're most likely to qualify for based on your answers.
+                <p className="text-base mb-6 ml-9" style={{ color: '#6B625A' }}>
+                  Programs you're most likely to qualify for ({likelyMatches.length} found)
                 </p>
                 <div className="space-y-6">
                   {likelyMatches.map((match) => (
-                    <ProgramCard key={match.program.id} match={match} isLikely={true} />
+                    <ProgramCard key={match.program.id} match={match} />
                   ))}
                 </div>
               </section>
@@ -622,16 +764,16 @@ export default function ResultsPage() {
             {/* Also Check Section */}
             {alsoCheck.length > 0 && (
               <section className="mb-10">
-                <h2 className="text-2xl font-bold mb-4 flex items-center gap-2" style={{ color: '#3D3530' }}>
-                  <Info className="w-6 h-6" style={{ color: '#2196F3' }} />
-                  Also Worth Checking ({alsoCheck.length})
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2" style={{ color: '#3D3530' }}>
+                  <Info className="w-7 h-7" style={{ color: '#2196F3' }} />
+                  Also Check
                 </h2>
-                <p className="text-base mb-6" style={{ color: '#6B625A' }}>
-                  Additional programs that may be available to you.
+                <p className="text-base mb-6 ml-9" style={{ color: '#6B625A' }}>
+                  Additional programs worth exploring ({alsoCheck.length} found)
                 </p>
                 <div className="space-y-6">
                   {alsoCheck.map((match) => (
-                    <ProgramCard key={match.program.id} match={match} isLikely={false} />
+                    <ProgramCard key={match.program.id} match={match} />
                   ))}
                 </div>
               </section>
@@ -642,7 +784,7 @@ export default function ResultsPage() {
         {/* Additional Resources */}
         <Card 
           className="border-2 mt-8 no-print"
-          style={{ borderColor: '#E8DDCF' }}
+          style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
         >
           <CardHeader>
             <CardTitle className="text-xl" style={{ color: '#3D3530' }}>
@@ -683,7 +825,7 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
-        {/* Action buttons */}
+        {/* Bottom Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 no-print">
           <Link href="/start">
             <Button 
@@ -692,8 +834,8 @@ export default function ResultsPage() {
               className="h-12 px-6 w-full sm:w-auto"
               style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
             >
-              <ArrowLeft className="mr-2 w-5 h-5" />
-              Retake Quiz
+              <Edit className="mr-2 w-5 h-5" />
+              Edit Answers
             </Button>
           </Link>
           <Button 
