@@ -817,7 +817,7 @@ export default function ResultsPage() {
                 </p>
                 <div className="space-y-6">
                   {alsoCheck.map((match) => (
-                    <ProgramCard key={match.program.id} match={match} />
+                    <ProgramCard key={match.program.id} match={match} userState={normalizedData?.state} />
                   ))}
                 </div>
               </section>
