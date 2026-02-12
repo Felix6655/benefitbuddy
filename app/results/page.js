@@ -107,14 +107,16 @@ function normalizeQuizData(raw) {
   const isUnder18 = (val) => {
     if (!val) return false;
     const v = String(val).toLowerCase().replace(/[^a-z0-9]/g, '');
-    return v.includes('under18') || v === 'under_18' || v === 'under18';
+    // Match: under_18, under18, under 18
+    return v.includes('under');
   };
 
   // Helper to check if value indicates "65+"
   const is65Plus = (val) => {
     if (!val) return false;
-    const v = String(val).toLowerCase().replace(/[^a-z0-9+]/g, '');
-    return v.includes('65') || v.includes('senior') || v === '65plus' || v === '65_plus';
+    const v = String(val).toLowerCase();
+    // Match: 65_plus, 65plus, 65+, 65 or older
+    return v.includes('65') || v.includes('senior');
   };
 
   // Helper to parse boolean-like values
@@ -130,22 +132,23 @@ function normalizeQuizData(raw) {
     return isNaN(num) ? null : num;
   };
 
-  // Helper to normalize needs array
+  // Helper to normalize needs array - map quiz need IDs to matching logic keys
   const normalizeNeeds = (needs) => {
     if (!needs) return [];
     if (!Array.isArray(needs)) return [];
     return needs.map(n => {
-      const v = String(n).toLowerCase().replace(/[^a-z]/g, '');
-      if (v.includes('food')) return 'food';
-      if (v.includes('health') || v.includes('medical')) return 'healthcare';
+      const v = String(n).toLowerCase();
+      // Map quiz values to matching logic values
+      if (v.includes('food') || v === 'food_help') return 'food';
+      if (v.includes('health') || v.includes('medical') || v === 'healthcare') return 'healthcare';
       if (v.includes('housing') || v.includes('rent')) return 'housing';
-      if (v.includes('util') || v.includes('energy') || v.includes('electric')) return 'utilities';
-      if (v.includes('cash') || v.includes('money')) return 'cash';
+      if (v.includes('util') || v.includes('energy') || v.includes('electric') || v === 'utilities') return 'utilities';
+      if (v.includes('cash') || v.includes('money') || v === 'cash_assistance') return 'cash';
       return v;
     });
   };
 
-  // Normalize age range
+  // Normalize age range - quiz uses: under_18, 18_64, 65_plus
   let ageCategory = '18to64'; // default
   const ageVal = raw.age_range || raw.ageRange || raw.age || '';
   if (isUnder18(ageVal)) {
