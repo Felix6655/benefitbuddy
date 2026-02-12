@@ -1031,6 +1031,7 @@ export default function ResultsPage() {
   const [normalizedData, setNormalizedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState({ likelyMatches: [], alsoCheck: [] });
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -1055,6 +1056,18 @@ export default function ResultsPage() {
   const handlePrint = () => {
     window.print();
   };
+
+  // Check if Medicare Savings Programs is in results (show CTA for seniors)
+  const hasMedicareProgram = matches.likelyMatches.some(m => m.program.id === 'medicare_savings') ||
+                              matches.alsoCheck.some(m => m.program.id === 'medicare_savings');
+  const isSenior = normalizedData?.ageRange === '65plus';
+  const showMedicareCTA = hasMedicareProgram || isSenior;
+
+  // Get list of matched program IDs for lead tracking
+  const matchedProgramIds = [
+    ...matches.likelyMatches.map(m => m.program.id),
+    ...matches.alsoCheck.map(m => m.program.id),
+  ];
 
   if (loading) {
     return (
