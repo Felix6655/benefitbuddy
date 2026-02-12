@@ -67,10 +67,25 @@ module.exports = {
                                 'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
                                 border: 'hsl(var(--sidebar-border))',
                                 ring: 'hsl(var(--sidebar-ring))'
+                        },
+                        // Warm theme custom colors
+                        warm: {
+                                bg: '#F8F1E9',
+                                surface: '#FFF8F0',
+                                border: '#E8DDCF',
+                                primary: '#D08C60',
+                                'primary-hover': '#B76E45'
                         }
                 },
                 textColor: {
                         muted: '#6B625A'
+                },
+                backgroundColor: {
+                        'warm-bg': '#F8F1E9',
+                        'warm-surface': '#FFF8F0'
+                },
+                borderColor: {
+                        'warm-border': '#E8DDCF'
                 },
                 borderRadius: {
                         lg: 'var(--radius)',

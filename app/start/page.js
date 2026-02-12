@@ -31,7 +31,7 @@ function StepBasicInfo({ data, onChange, errors }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#3D3530] mb-2">
           Let's get to know you
         </h2>
         <p className="text-muted senior-text">
@@ -41,7 +41,7 @@ function StepBasicInfo({ data, onChange, errors }) {
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="full_name" className="text-lg font-medium">
+          <Label htmlFor="full_name" className="text-lg font-medium text-[#3D3530]">
             Your Name (optional)
           </Label>
           <Input
@@ -49,12 +49,12 @@ function StepBasicInfo({ data, onChange, errors }) {
             value={data.full_name || ''}
             onChange={(e) => onChange('full_name', e.target.value)}
             placeholder="Your name"
-            className="mt-2 h-14 text-lg"
+            className="mt-2 h-14 text-lg border-[#E8DDCF] focus:border-[#D08C60]"
           />
         </div>
 
         <div>
-          <Label htmlFor="email" className="text-lg font-medium">
+          <Label htmlFor="email" className="text-lg font-medium text-[#3D3530]">
             Email (optional)
           </Label>
           <Input
@@ -63,7 +63,7 @@ function StepBasicInfo({ data, onChange, errors }) {
             value={data.email || ''}
             onChange={(e) => onChange('email', e.target.value)}
             placeholder="you@example.com"
-            className="mt-2 h-14 text-lg"
+            className="mt-2 h-14 text-lg border-[#E8DDCF] focus:border-[#D08C60]"
           />
           {errors.email && (
             <p className="text-red-600 mt-1">{errors.email}</p>
@@ -71,7 +71,7 @@ function StepBasicInfo({ data, onChange, errors }) {
         </div>
 
         <div>
-          <Label htmlFor="phone" className="text-lg font-medium">
+          <Label htmlFor="phone" className="text-lg font-medium text-[#3D3530]">
             Phone Number (optional)
           </Label>
           <Input
@@ -80,7 +80,7 @@ function StepBasicInfo({ data, onChange, errors }) {
             value={data.phone || ''}
             onChange={(e) => onChange('phone', e.target.value)}
             placeholder="(555) 123-4567"
-            className="mt-2 h-14 text-lg"
+            className="mt-2 h-14 text-lg border-[#E8DDCF] focus:border-[#D08C60]"
           />
         </div>
       </div>
@@ -103,7 +103,7 @@ function StepDemographics({ data, onChange, errors }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#3D3530] mb-2">
           About Your Household
         </h2>
         <p className="text-muted senior-text">
@@ -113,7 +113,7 @@ function StepDemographics({ data, onChange, errors }) {
 
       <div className="space-y-6">
         <div>
-          <Label className="text-lg font-medium mb-3 block">
+          <Label className="text-lg font-medium mb-3 block text-[#3D3530]">
             Your Age Range <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
@@ -136,7 +136,7 @@ function StepDemographics({ data, onChange, errors }) {
                 />
                 <Label
                   htmlFor={`age_${option.value}`}
-                  className="flex items-center justify-center p-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-blue-50 peer-data-[state=checked]:border-blue-600 peer-data-[state=checked]:bg-blue-50 text-lg font-medium"
+                  className="flex items-center justify-center p-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-[#FFF8F0] peer-data-[state=checked]:border-[#D08C60] peer-data-[state=checked]:bg-[#FFF8F0] text-lg font-medium text-[#3D3530]"
                 >
                   {option.label}
                 </Label>
@@ -149,7 +149,7 @@ function StepDemographics({ data, onChange, errors }) {
         </div>
 
         <div>
-          <Label htmlFor="zip_code" className="text-lg font-medium">
+          <Label htmlFor="zip_code" className="text-lg font-medium text-[#3D3530]">
             ZIP Code <span className="text-red-500">*</span>
           </Label>
           <Input
@@ -157,7 +157,7 @@ function StepDemographics({ data, onChange, errors }) {
             value={data.zip_code || ''}
             onChange={(e) => onChange('zip_code', e.target.value)}
             placeholder="12345"
-            className="mt-2 h-14 text-lg max-w-xs"
+            className="mt-2 h-14 text-lg max-w-xs border-[#E8DDCF] focus:border-[#D08C60]"
             maxLength={10}
           />
           {errors.zip_code && (
@@ -166,7 +166,7 @@ function StepDemographics({ data, onChange, errors }) {
         </div>
 
         <div>
-          <Label htmlFor="household_size" className="text-lg font-medium">
+          <Label htmlFor="household_size" className="text-lg font-medium text-[#3D3530]">
             Household Size <span className="text-red-500">*</span>
           </Label>
           <p className="text-muted text-sm mb-2">Including yourself</p>
@@ -174,7 +174,7 @@ function StepDemographics({ data, onChange, errors }) {
             value={data.household_size || ''}
             onValueChange={(value) => onChange('household_size', value)}
           >
-            <SelectTrigger className="h-14 text-lg max-w-xs">
+            <SelectTrigger className="h-14 text-lg max-w-xs border-[#E8DDCF]">
               <SelectValue placeholder="Select household size" />
             </SelectTrigger>
             <SelectContent>
@@ -199,7 +199,7 @@ function StepFinancial({ data, onChange, errors }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#3D3530] mb-2">
           Income & Employment
         </h2>
         <p className="text-muted senior-text">
@@ -209,7 +209,7 @@ function StepFinancial({ data, onChange, errors }) {
 
       <div className="space-y-6">
         <div>
-          <Label className="text-lg font-medium mb-3 block">
+          <Label className="text-lg font-medium mb-3 block text-[#3D3530]">
             Monthly Household Income (before taxes) <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
@@ -232,7 +232,7 @@ function StepFinancial({ data, onChange, errors }) {
                 />
                 <Label
                   htmlFor={`income_${option.value}`}
-                  className="flex items-center p-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-blue-50 peer-data-[state=checked]:border-blue-600 peer-data-[state=checked]:bg-blue-50 text-lg"
+                  className="flex items-center p-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-[#FFF8F0] peer-data-[state=checked]:border-[#D08C60] peer-data-[state=checked]:bg-[#FFF8F0] text-lg text-[#3D3530]"
                 >
                   {option.label}
                 </Label>
@@ -245,7 +245,7 @@ function StepFinancial({ data, onChange, errors }) {
         </div>
 
         <div>
-          <Label className="text-lg font-medium mb-3 block">
+          <Label className="text-lg font-medium mb-3 block text-[#3D3530]">
             Employment Status <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
@@ -269,7 +269,7 @@ function StepFinancial({ data, onChange, errors }) {
                 />
                 <Label
                   htmlFor={`emp_${option.value}`}
-                  className="flex items-center justify-center p-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-blue-50 peer-data-[state=checked]:border-blue-600 peer-data-[state=checked]:bg-blue-50 text-lg"
+                  className="flex items-center justify-center p-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-[#FFF8F0] peer-data-[state=checked]:border-[#D08C60] peer-data-[state=checked]:bg-[#FFF8F0] text-lg text-[#3D3530]"
                 >
                   {option.label}
                 </Label>
@@ -288,7 +288,7 @@ function StepFinancial({ data, onChange, errors }) {
 function StepSituation({ data, onChange, errors }) {
   const YesNoQuestion = ({ field, label }) => (
     <div>
-      <Label className="text-lg font-medium mb-3 block">{label} <span className="text-red-500">*</span></Label>
+      <Label className="text-lg font-medium mb-3 block text-[#3D3530]">{label} <span className="text-red-500">*</span></Label>
       <RadioGroup
         value={data[field] || ''}
         onValueChange={(value) => onChange(field, value)}
@@ -298,7 +298,7 @@ function StepSituation({ data, onChange, errors }) {
           <RadioGroupItem value="yes" id={`${field}_yes`} className="peer sr-only" />
           <Label
             htmlFor={`${field}_yes`}
-            className="flex items-center justify-center px-8 py-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-green-50 peer-data-[state=checked]:border-green-600 peer-data-[state=checked]:bg-green-50 text-lg font-medium"
+            className="flex items-center justify-center px-8 py-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-green-50 peer-data-[state=checked]:border-green-600 peer-data-[state=checked]:bg-green-50 text-lg font-medium text-[#3D3530]"
           >
             Yes
           </Label>
@@ -307,7 +307,7 @@ function StepSituation({ data, onChange, errors }) {
           <RadioGroupItem value="no" id={`${field}_no`} className="peer sr-only" />
           <Label
             htmlFor={`${field}_no`}
-            className="flex items-center justify-center px-8 py-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-gray-50 peer-data-[state=checked]:border-gray-600 peer-data-[state=checked]:bg-gray-100 text-lg font-medium"
+            className="flex items-center justify-center px-8 py-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-gray-50 peer-data-[state=checked]:border-gray-600 peer-data-[state=checked]:bg-gray-100 text-lg font-medium text-[#3D3530]"
           >
             No
           </Label>
@@ -320,7 +320,7 @@ function StepSituation({ data, onChange, errors }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#3D3530] mb-2">
           Your Situation
         </h2>
         <p className="text-muted senior-text">
@@ -342,7 +342,7 @@ function StepHousing({ data, onChange, errors }) {
   return (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-[#3D3530] mb-2">
           Housing & Healthcare
         </h2>
         <p className="text-muted senior-text">
@@ -352,7 +352,7 @@ function StepHousing({ data, onChange, errors }) {
 
       <div className="space-y-6">
         <div>
-          <Label className="text-lg font-medium mb-3 block">
+          <Label className="text-lg font-medium mb-3 block text-[#3D3530]">
             What is your housing situation? <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
@@ -374,7 +374,7 @@ function StepHousing({ data, onChange, errors }) {
                 />
                 <Label
                   htmlFor={`housing_${option.value}`}
-                  className="flex items-center justify-center p-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-blue-50 peer-data-[state=checked]:border-blue-600 peer-data-[state=checked]:bg-blue-50 text-lg text-center"
+                  className="flex items-center justify-center p-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-[#FFF8F0] peer-data-[state=checked]:border-[#D08C60] peer-data-[state=checked]:bg-[#FFF8F0] text-lg text-center text-[#3D3530]"
                 >
                   {option.label}
                 </Label>
@@ -387,7 +387,7 @@ function StepHousing({ data, onChange, errors }) {
         </div>
 
         <div>
-          <Label className="text-lg font-medium mb-3 block">
+          <Label className="text-lg font-medium mb-3 block text-[#3D3530]">
             Do you currently have health insurance? <span className="text-red-500">*</span>
           </Label>
           <RadioGroup
@@ -399,7 +399,7 @@ function StepHousing({ data, onChange, errors }) {
               <RadioGroupItem value="yes" id="insurance_yes" className="peer sr-only" />
               <Label
                 htmlFor="insurance_yes"
-                className="flex items-center justify-center px-8 py-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-green-50 peer-data-[state=checked]:border-green-600 peer-data-[state=checked]:bg-green-50 text-lg font-medium"
+                className="flex items-center justify-center px-8 py-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-green-50 peer-data-[state=checked]:border-green-600 peer-data-[state=checked]:bg-green-50 text-lg font-medium text-[#3D3530]"
               >
                 Yes
               </Label>
@@ -408,7 +408,7 @@ function StepHousing({ data, onChange, errors }) {
               <RadioGroupItem value="no" id="insurance_no" className="peer sr-only" />
               <Label
                 htmlFor="insurance_no"
-                className="flex items-center justify-center px-8 py-4 bg-white border-2 rounded-lg cursor-pointer hover:bg-gray-50 peer-data-[state=checked]:border-gray-600 peer-data-[state=checked]:bg-gray-100 text-lg font-medium"
+                className="flex items-center justify-center px-8 py-4 bg-white border-2 border-[#E8DDCF] rounded-lg cursor-pointer hover:bg-gray-50 peer-data-[state=checked]:border-gray-600 peer-data-[state=checked]:bg-gray-100 text-lg font-medium text-[#3D3530]"
               >
                 No
               </Label>
@@ -540,24 +540,24 @@ export default function StartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F8F1E9]">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b border-[#E8DDCF]">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#D08C60] rounded-full flex items-center justify-center">
               <Heart className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-blue-900">BenefitBuddy</span>
+            <span className="text-xl font-bold text-[#3D3530]">BenefitBuddy</span>
           </Link>
           <Link href="/">
-            <Button variant="ghost">Exit</Button>
+            <Button variant="ghost" className="text-[#6B625A] hover:text-[#3D3530]">Exit</Button>
           </Link>
         </div>
       </header>
 
       {/* Progress Bar */}
-      <div className="bg-white border-b py-4">
+      <div className="bg-white border-b border-[#E8DDCF] py-4">
         <div className="max-w-3xl mx-auto px-4">
           <div className="flex justify-between text-sm text-muted mb-2">
             <span>Step {step} of {TOTAL_STEPS}</span>
@@ -569,7 +569,7 @@ export default function StartPage() {
 
       {/* Form Content */}
       <main className="max-w-3xl mx-auto px-4 py-8">
-        <Card className="border-2">
+        <Card className="border-2 border-[#E8DDCF] bg-white">
           <CardContent className="p-6 md:p-8">
             {renderStep()}
 
@@ -580,13 +580,13 @@ export default function StartPage() {
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
+            <div className="flex justify-between mt-8 pt-6 border-t border-[#E8DDCF]">
               <Button
                 variant="outline"
                 onClick={handleBack}
                 disabled={step === 1 || isSubmitting}
                 size="lg"
-                className="h-14 px-6 text-lg"
+                className="h-14 px-6 text-lg border-[#E8DDCF] text-[#6B625A] hover:bg-[#FFF8F0]"
               >
                 <ArrowLeft className="mr-2 w-5 h-5" />
                 Back
@@ -596,7 +596,7 @@ export default function StartPage() {
                 onClick={handleNext}
                 disabled={isSubmitting}
                 size="lg"
-                className="h-14 px-8 text-lg"
+                className="h-14 px-8 text-lg bg-[#D08C60] hover:bg-[#B76E45] text-white"
               >
                 {isSubmitting ? (
                   <>
