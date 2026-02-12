@@ -1344,6 +1344,15 @@ export default function ResultsPage() {
           </p>
         </div>
       </footer>
+
+      {/* Lead Capture Modal */}
+      <LeadCaptureModal
+        isOpen={isLeadModalOpen}
+        onClose={() => setIsLeadModalOpen(false)}
+        userState={normalizedData?.state}
+        userZip={normalizedData?.zip}
+        matchedPrograms={matchedProgramIds}
+      />
     </div>
   );
 }
