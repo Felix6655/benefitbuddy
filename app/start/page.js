@@ -34,7 +34,7 @@ function StepBasicInfo({ data, onChange, errors }) {
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
           Let's get to know you
         </h2>
-        <p className="text-gray-600 senior-text">
+        <p className="text-muted senior-text">
           This information is optional but helps us personalize your results.
         </p>
       </div>
@@ -106,7 +106,7 @@ function StepDemographics({ data, onChange, errors }) {
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
           About Your Household
         </h2>
-        <p className="text-gray-600 senior-text">
+        <p className="text-muted senior-text">
           This helps us find programs for your situation.
         </p>
       </div>
@@ -169,7 +169,7 @@ function StepDemographics({ data, onChange, errors }) {
           <Label htmlFor="household_size" className="text-lg font-medium">
             Household Size <span className="text-red-500">*</span>
           </Label>
-          <p className="text-gray-500 text-sm mb-2">Including yourself</p>
+          <p className="text-muted text-sm mb-2">Including yourself</p>
           <Select
             value={data.household_size || ''}
             onValueChange={(value) => onChange('household_size', value)}
@@ -202,7 +202,7 @@ function StepFinancial({ data, onChange, errors }) {
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
           Income & Employment
         </h2>
-        <p className="text-gray-600 senior-text">
+        <p className="text-muted senior-text">
           Many programs are based on income. Give us your best estimate.
         </p>
       </div>
@@ -323,7 +323,7 @@ function StepSituation({ data, onChange, errors }) {
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
           Your Situation
         </h2>
-        <p className="text-gray-600 senior-text">
+        <p className="text-muted senior-text">
           Answer Yes or No to help us find the right programs.
         </p>
       </div>
@@ -345,7 +345,7 @@ function StepHousing({ data, onChange, errors }) {
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
           Housing & Healthcare
         </h2>
-        <p className="text-gray-600 senior-text">
+        <p className="text-muted senior-text">
           Last step! This helps us find housing and health programs.
         </p>
       </div>
@@ -559,7 +559,7 @@ export default function StartPage() {
       {/* Progress Bar */}
       <div className="bg-white border-b py-4">
         <div className="max-w-3xl mx-auto px-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
+          <div className="flex justify-between text-sm text-muted mb-2">
             <span>Step {step} of {TOTAL_STEPS}</span>
             <span>{Math.round(progress)}% complete</span>
           </div>
@@ -620,7 +620,7 @@ export default function StartPage() {
         </Card>
 
         {/* Trust Message */}
-        <p className="text-center text-gray-500 text-sm mt-6">
+        <p className="text-center text-muted text-sm mt-6">
           🔒 Your information is private and secure. We never sell your data.
         </p>
       </main>

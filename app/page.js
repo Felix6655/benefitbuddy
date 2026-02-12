@@ -146,7 +146,7 @@ function Footer() {
         <div className="grid md:grid-cols-3 gap-8 mb-8">
           <div>
             <h3 className="font-bold text-lg mb-3 text-gray-900">About BenefitBuddy</h3>
-            <p className="text-gray-600 senior-text">
+            <p className="text-muted senior-text">
               We help you understand government benefits you may qualify for.
               Free to use, no sign-up required.
             </p>
@@ -201,7 +201,7 @@ function Footer() {
               Always verify eligibility through official government channels.
             </p>
           </div>
-          <p className="text-center text-gray-500 text-sm">
+          <p className="text-center text-muted text-sm">
             © {new Date().getFullYear()} BenefitBuddy. For informational purposes only.
           </p>
         </div>
@@ -224,7 +224,7 @@ function FAQSection() {
             <AccordionTrigger className="px-6 text-lg font-medium text-left">
               What is BenefitBuddy?
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-4 senior-text text-gray-600">
+            <AccordionContent className="px-6 pb-4 senior-text text-muted">
               BenefitBuddy is a free tool that helps you discover government assistance programs 
               you may be eligible for. We ask a few simple questions and show you programs like 
               SNAP, Medicaid, housing assistance, and more.
@@ -235,7 +235,7 @@ function FAQSection() {
             <AccordionTrigger className="px-6 text-lg font-medium text-left">
               Is BenefitBuddy a government website?
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-4 senior-text text-gray-600">
+            <AccordionContent className="px-6 pb-4 senior-text text-muted">
               No. BenefitBuddy is not affiliated with any government agency. We provide 
               information and guidance to help you understand what benefits you might qualify for, 
               but you must apply through official government channels.
@@ -246,7 +246,7 @@ function FAQSection() {
             <AccordionTrigger className="px-6 text-lg font-medium text-left">
               Is my information safe?
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-4 senior-text text-gray-600">
+            <AccordionContent className="px-6 pb-4 senior-text text-muted">
               We collect minimal information and most fields are optional. We never sell 
               or share your personal data. Your information is only used to show you 
               relevant benefit recommendations.
@@ -257,7 +257,7 @@ function FAQSection() {
             <AccordionTrigger className="px-6 text-lg font-medium text-left">
               How accurate are the results?
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-4 senior-text text-gray-600">
+            <AccordionContent className="px-6 pb-4 senior-text text-muted">
               Our tool uses general eligibility guidelines to suggest programs you might 
               qualify for. Actual eligibility depends on many factors and must be verified 
               through the official application process. Think of our results as a starting point.
@@ -268,7 +268,7 @@ function FAQSection() {
             <AccordionTrigger className="px-6 text-lg font-medium text-left">
               Does this cost anything?
             </AccordionTrigger>
-            <AccordionContent className="px-6 pb-4 senior-text text-gray-600">
+            <AccordionContent className="px-6 pb-4 senior-text text-muted">
               No! BenefitBuddy is completely free to use. We never ask for payment or 
               credit card information.
             </AccordionContent>
@@ -329,7 +329,7 @@ export default function HomePage() {
                   <CardTitle className="text-xl">1. Answer Questions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 senior-text">
+                  <p className="text-muted senior-text">
                     Simple questions about your household, income, and situation. 
                     Most fields are optional.
                   </p>
@@ -344,7 +344,7 @@ export default function HomePage() {
                   <CardTitle className="text-xl">2. Get Recommendations</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 senior-text">
+                  <p className="text-muted senior-text">
                     We match your answers to programs you might qualify for 
                     and explain why.
                   </p>
@@ -359,7 +359,7 @@ export default function HomePage() {
                   <CardTitle className="text-xl">3. Take Next Steps</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 senior-text">
+                  <p className="text-muted senior-text">
                     Get clear instructions and links to official sites 
                     where you can apply.
                   </p>
@@ -375,7 +375,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-bold text-center mb-4 text-gray-900">
               Programs We Can Help You Find
             </h2>
-            <p className="text-center text-gray-600 mb-12 senior-text max-w-2xl mx-auto">
+            <p className="text-center text-muted mb-12 senior-text max-w-2xl mx-auto">
               We check eligibility for major federal and state assistance programs:
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
