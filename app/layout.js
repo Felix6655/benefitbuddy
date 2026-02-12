@@ -114,7 +114,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ backgroundColor: '#F8F1E9' }}>
       <head>
         <link rel="canonical" href={process.env.NEXT_PUBLIC_SITE_URL || 'https://benefitbuddy.vercel.app'} />
         <script
@@ -122,7 +122,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={inter.className} style={{ backgroundColor: '#F8F1E9', color: '#2E2A26', minHeight: '100vh' }}>
         {children}
       </body>
     </html>
