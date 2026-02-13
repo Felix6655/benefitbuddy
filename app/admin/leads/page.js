@@ -168,6 +168,7 @@ function AdminLeadsContent() {
       `Phone: ${formatPhone(lead.phone_display || lead.phone)}`,
       `ZIP: ${lead.zip_code}`,
       lead.state ? `State: ${lead.state}` : null,
+      `Priority: ${(lead.lead_priority || 'cold').toUpperCase()}`,
       '---',
       lead.turning_65_soon !== undefined ? `Turning 65 Soon: ${lead.turning_65_soon ? 'Yes' : 'No'}` : null,
       lead.has_medicare_now !== undefined ? `Has Medicare: ${lead.has_medicare_now ? 'Yes' : 'No'}` : null,
