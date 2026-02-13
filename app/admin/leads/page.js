@@ -466,6 +466,83 @@ function AdminLeadsContent() {
                             </div>
                           </div>
                         )}
+
+                        {/* Action Buttons */}
+                        <div className="mt-4 pt-4 flex flex-wrap gap-2" style={{ borderTop: '1px solid #E8DDCF' }}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyLeadInfo(lead)}
+                            className="h-8"
+                            style={{ borderColor: '#E8DDCF' }}
+                          >
+                            {copiedId === lead.id ? (
+                              <>
+                                <CheckCircle className="w-3.5 h-3.5 mr-1.5" style={{ color: '#4CAF50' }} />
+                                Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3.5 h-3.5 mr-1.5" />
+                                Copy Lead
+                              </>
+                            )}
+                          </Button>
+                          
+                          {lead.status !== 'contacted' && lead.status !== 'converted' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateLeadStatus(lead.id, 'contacted')}
+                              disabled={updatingId === lead.id}
+                              className="h-8"
+                              style={{ borderColor: '#4CAF50', color: '#4CAF50' }}
+                            >
+                              {updatingId === lead.id ? (
+                                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                              ) : (
+                                <PhoneCall className="w-3.5 h-3.5 mr-1.5" />
+                              )}
+                              Mark Contacted
+                            </Button>
+                          )}
+                          
+                          {lead.status !== 'converted' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateLeadStatus(lead.id, 'converted')}
+                              disabled={updatingId === lead.id}
+                              className="h-8"
+                              style={{ borderColor: '#7B1FA2', color: '#7B1FA2' }}
+                            >
+                              {updatingId === lead.id ? (
+                                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                              ) : (
+                                <Trophy className="w-3.5 h-3.5 mr-1.5" />
+                              )}
+                              Mark Converted
+                            </Button>
+                          )}
+
+                          {lead.status !== 'lost' && lead.status !== 'converted' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateLeadStatus(lead.id, 'lost')}
+                              disabled={updatingId === lead.id}
+                              className="h-8"
+                              style={{ borderColor: '#C62828', color: '#C62828' }}
+                            >
+                              {updatingId === lead.id ? (
+                                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                              ) : (
+                                <XCircle className="w-3.5 h-3.5 mr-1.5" />
+                              )}
+                              Mark Lost
+                            </Button>
+                          )}
+                        </div>
                       </div>
 
                       {/* Source badge */}
