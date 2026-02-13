@@ -770,7 +770,7 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
         {/* Content */}
         <div className="p-6">
           {submitResult?.success ? (
-            // Success state
+            // Success state - Updated message
             <div className="text-center py-4">
               <div 
                 className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
@@ -781,8 +781,12 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
               <h3 className="text-xl font-bold mb-2" style={{ color: '#3D3530' }}>
                 Thank You!
               </h3>
-              <p className="text-base mb-6" style={{ color: '#6B625A' }}>
-                {submitResult.message}
+              <p className="text-base mb-3" style={{ color: '#6B625A' }}>
+                A licensed Medicare advisor may call you in the next <strong>5–15 minutes</strong>.
+              </p>
+              <p className="text-base mb-6 p-3 rounded-lg" style={{ backgroundColor: '#FFF8F0', color: '#8B6914' }}>
+                <Phone className="w-4 h-4 inline-block mr-1" />
+                <strong>Please answer unknown numbers</strong> to get help faster.
               </p>
               <Button
                 onClick={onClose}
