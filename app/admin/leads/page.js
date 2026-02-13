@@ -529,6 +529,15 @@ function AdminLeadsContent() {
                               >
                                 {priorityStyle.icon} {lead.lead_priority?.toUpperCase() || 'COLD'}
                               </span>
+                              {/* Assigned Agent Badge */}
+                              {lead.assigned_agent && (
+                                <span 
+                                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                                  style={{ backgroundColor: '#E8F5E9', color: '#2E7D32' }}
+                                >
+                                  → {lead.assigned_agent.name}
+                                </span>
+                              )}
                             </div>
                             <span 
                               className="inline-block px-2 py-0.5 rounded text-xs font-medium"
@@ -566,6 +575,34 @@ function AdminLeadsContent() {
                             </span>
                           </div>
                         </div>
+
+                        {/* Assigned Agent Info */}
+                        {lead.assigned_agent && (
+                          <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E8DDCF' }}>
+                            <p className="text-sm mb-2 font-medium" style={{ color: '#6B625A' }}>Assigned Agent:</p>
+                            <div className="flex flex-wrap items-center gap-4">
+                              <span className="font-medium" style={{ color: '#3D3530' }}>
+                                {lead.assigned_agent.name}
+                              </span>
+                              {lead.assigned_agent.phone && (
+                                <a href={`tel:${lead.assigned_agent.phone}`} className="flex items-center gap-1 text-sm hover:underline" style={{ color: '#D08C60' }}>
+                                  <Phone className="w-3 h-3" />
+                                  {lead.assigned_agent.phone}
+                                </a>
+                              )}
+                              {lead.delivery?.agent_webhook_sent && (
+                                <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: '#E8F5E9', color: '#2E7D32' }}>
+                                  ✓ Webhook delivered
+                                </span>
+                              )}
+                              {lead.delivery?.agent_webhook_error && (
+                                <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: '#FFEBEE', color: '#C62828' }}>
+                                  ✗ Webhook failed
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Pre-qualifying Answers */}
                         {(lead.turning_65_soon !== undefined || lead.has_medicare_now !== undefined || lead.wants_call_today !== undefined) && (
