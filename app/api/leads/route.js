@@ -211,7 +211,9 @@ export async function POST(request) {
     const webhookUrl = process.env.N8N_LEADS_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
     if (webhookUrl) {
       // Determine event name based on priority
-      const event_name = `medicare_lead_${lead_priority}`;
+      const event_name = assigned_agent 
+        ? `medicare_lead_${lead_priority}_assigned`
+        : `medicare_lead_${lead_priority}`;
       
       try {
         const webhookResponse = await fetch(webhookUrl, {
@@ -222,6 +224,12 @@ export async function POST(request) {
             type: 'medicare_lead',
             event_name: event_name,
             lead_priority: lead_priority,
+            assigned_agent: assigned_agent ? {
+              id: assigned_agent.id,
+              name: assigned_agent.name,
+              phone: assigned_agent.phone,
+              email: assigned_agent.email,
+            } : null,
             lead: {
               id: lead.id,
               full_name: lead.full_name,
