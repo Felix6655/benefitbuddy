@@ -85,6 +85,11 @@ export async function POST(request) {
       zip_code: validData.zip_code,
       email: validData.email || null,
       state: validData.state || null,
+      // Pre-qualifying answers
+      turning_65_soon: validData.turning_65_soon,
+      has_medicare_now: validData.has_medicare_now,
+      wants_call_today: validData.wants_call_today,
+      // Meta fields
       consent: validData.consent,
       consent_timestamp: new Date().toISOString(),
       source: validData.source || 'medicare_cta',
@@ -114,6 +119,11 @@ export async function POST(request) {
             phone: lead.phone_display,
             zip_code: lead.zip_code,
             state: lead.state,
+            // Pre-qualifying answers
+            turning_65_soon: lead.turning_65_soon,
+            has_medicare_now: lead.has_medicare_now,
+            wants_call_today: lead.wants_call_today,
+            // Meta
             source: lead.source,
             page_url: lead.page_url,
             matched_programs: lead.matched_programs,
