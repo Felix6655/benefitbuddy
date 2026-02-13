@@ -449,6 +449,48 @@ function AdminLeadsContent() {
                           </div>
                         </div>
 
+                        {/* Pre-qualifying Answers */}
+                        {(lead.turning_65_soon !== undefined || lead.has_medicare_now !== undefined || lead.wants_call_today !== undefined) && (
+                          <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E8DDCF' }}>
+                            <p className="text-sm mb-2 font-medium" style={{ color: '#6B625A' }}>Pre-Qualifying Answers:</p>
+                            <div className="flex flex-wrap gap-3">
+                              {lead.turning_65_soon !== undefined && (
+                                <span 
+                                  className="px-2 py-1 rounded text-xs font-medium"
+                                  style={{ 
+                                    backgroundColor: lead.turning_65_soon ? '#E8F5E9' : '#FFEBEE',
+                                    color: lead.turning_65_soon ? '#2E7D32' : '#C62828'
+                                  }}
+                                >
+                                  Turning 65: {lead.turning_65_soon ? 'Yes' : 'No'}
+                                </span>
+                              )}
+                              {lead.has_medicare_now !== undefined && (
+                                <span 
+                                  className="px-2 py-1 rounded text-xs font-medium"
+                                  style={{ 
+                                    backgroundColor: lead.has_medicare_now ? '#E3F2FD' : '#FFF8F0',
+                                    color: lead.has_medicare_now ? '#1565C0' : '#D08C60'
+                                  }}
+                                >
+                                  Has Medicare: {lead.has_medicare_now ? 'Yes' : 'No'}
+                                </span>
+                              )}
+                              {lead.wants_call_today !== undefined && (
+                                <span 
+                                  className="px-2 py-1 rounded text-xs font-medium"
+                                  style={{ 
+                                    backgroundColor: lead.wants_call_today ? '#E8F5E9' : '#ECEFF1',
+                                    color: lead.wants_call_today ? '#2E7D32' : '#546E7A'
+                                  }}
+                                >
+                                  Wants Call Today: {lead.wants_call_today ? 'Yes ⚡' : 'No'}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Matched programs */}
                         {lead.matched_programs && lead.matched_programs.length > 0 && (
                           <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E8DDCF' }}>
