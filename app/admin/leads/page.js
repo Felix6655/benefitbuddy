@@ -900,8 +900,26 @@ function AdminLeadsContent() {
                                     {lead.delivery.error}
                                   </span>
                                 )}
+                                {/* Send Now button for on-hold leads */}
+                                {lead.status === 'on_hold_no_credits' && lead.assigned_agent && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => sendNow(lead.id)}
+                                    disabled={sendingId === lead.id}
+                                    className="h-7 text-xs font-bold"
+                                    style={{ borderColor: '#E65100', color: '#E65100', backgroundColor: '#FFF3E0' }}
+                                  >
+                                    {sendingId === lead.id ? (
+                                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    ) : (
+                                      <Send className="w-3 h-3 mr-1" />
+                                    )}
+                                    Send Now
+                                  </Button>
+                                )}
                                 {/* Retry button - show if not delivered and attempts < 3 OR if max attempts reached */}
-                                {deliveryStatus.status !== 'delivered' && (
+                                {deliveryStatus.status !== 'delivered' && lead.status !== 'on_hold_no_credits' && (
                                   <Button
                                     variant="outline"
                                     size="sm"
@@ -945,7 +963,7 @@ function AdminLeadsContent() {
                             )}
                           </Button>
                           
-                          {lead.status !== 'contacted' && lead.status !== 'converted' && (
+                          {lead.status !== 'contacted' && lead.status !== 'converted' && lead.status !== 'on_hold_no_credits' && (
                             <Button
                               variant="outline"
                               size="sm"
