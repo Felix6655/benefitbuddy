@@ -532,6 +532,91 @@ function AdminAgentsContent() {
                         </div>
                       </div>
 
+                      {/* Credits Section */}
+                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: '#FFF8F0' }}>
+                        <div className="flex items-center justify-between flex-wrap gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#FFFFFF' }}>
+                              <CreditCard className="w-5 h-5" style={{ color: '#D08C60' }} />
+                            </div>
+                            <div>
+                              <p className="text-xs" style={{ color: '#6B625A' }}>Lead Credits</p>
+                              <p className="text-2xl font-bold" style={{ color: (agent.credits_remaining || 0) > 0 ? '#2E7D32' : '#C62828' }}>
+                                {agent.credits_remaining || 0}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddCredits(agent.id, 5)}
+                              disabled={updatingCredits === agent.id}
+                              style={{ borderColor: '#4CAF50', color: '#4CAF50' }}
+                            >
+                              {updatingCredits === agent.id ? <Loader2 className="w-3 h-3 animate-spin" /> : '+5'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleAddCredits(agent.id, 10)}
+                              disabled={updatingCredits === agent.id}
+                              style={{ borderColor: '#4CAF50', color: '#4CAF50' }}
+                            >
+                              {updatingCredits === agent.id ? <Loader2 className="w-3 h-3 animate-spin" /> : '+10'}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => { setCreditModalAgentId(agent.id); setCustomCredits(String(agent.credits_remaining || 0)); }}
+                              style={{ borderColor: '#1565C0', color: '#1565C0' }}
+                            >
+                              <Edit className="w-3 h-3 mr-1" />
+                              Set
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Custom credits modal inline */}
+                        {creditModalAgentId === agent.id && (
+                          <div className="mt-3 pt-3 flex items-center gap-2" style={{ borderTop: '1px solid #E8DDCF' }}>
+                            <Input
+                              type="number"
+                              min="0"
+                              value={customCredits}
+                              onChange={(e) => setCustomCredits(e.target.value)}
+                              placeholder="Enter credits"
+                              className="w-32 h-8"
+                              style={{ borderColor: '#E8DDCF' }}
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleSetCredits(agent.id)}
+                              disabled={updatingCredits === agent.id}
+                              className="h-8 text-white"
+                              style={{ backgroundColor: '#4CAF50' }}
+                            >
+                              {updatingCredits === agent.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => { setCreditModalAgentId(null); setCustomCredits(''); }}
+                              className="h-8"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {agent.credits_updated_at && (
+                          <p className="text-xs mt-2" style={{ color: '#6B625A' }}>
+                            Last updated: {new Date(agent.credits_updated_at).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         {agent.phone && (
                           <div className="flex items-center gap-2">
