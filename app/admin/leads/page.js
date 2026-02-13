@@ -500,10 +500,20 @@ function AdminLeadsContent() {
 
         {/* Title */}
         <h1 className="text-2xl font-bold mb-6" style={{ color: '#3D3530' }}>
-          {priorityFilter === 'all' 
-            ? `Medicare Leads (${filteredLeads.length})` 
-            : `${priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1)} Leads (${filteredLeads.length})`
-          }
+          {(() => {
+            let title = priorityFilter === 'all' 
+              ? 'Medicare Leads' 
+              : `${priorityFilter.charAt(0).toUpperCase() + priorityFilter.slice(1)} Leads`;
+            
+            if (agentFilter !== 'all') {
+              const agentName = agentFilter === 'unassigned' 
+                ? 'Unassigned' 
+                : agents.find(a => a.id === agentFilter)?.name || 'Unknown';
+              title += ` - ${agentName}`;
+            }
+            
+            return `${title} (${filteredLeads.length})`;
+          })()}
         </h1>
 
         {/* Loading state */}
