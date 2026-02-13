@@ -623,6 +623,8 @@ function FAQSection() {
 
 // Main Landing Page Component
 export default function HomePage() {
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: '#F8F1E9' }}>
       <AccessibilityControls />
@@ -662,6 +664,62 @@ export default function HomePage() {
             <p className="mt-6 text-lg" style={{ color: '#6B625A' }}>
               Takes about 3 minutes • No sign-up required
             </p>
+          </div>
+        </section>
+
+        {/* Medicare Help CTA Section */}
+        <section 
+          className="w-full py-12"
+          style={{ 
+            backgroundColor: '#FFF8F0',
+            borderTop: '2px solid #D08C60',
+            borderBottom: '2px solid #D08C60'
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: '#D08C60' }}
+                >
+                  <UserCheck className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold" style={{ color: '#3D3530' }}>
+                    Need Medicare Help?
+                  </h2>
+                  <p className="text-lg" style={{ color: '#6B625A' }}>
+                    Talk to a Licensed Advisor for Free
+                  </p>
+                </div>
+              </div>
+              <Button 
+                size="lg"
+                onClick={() => setIsLeadModalOpen(true)}
+                className="text-lg px-8 py-5 h-auto font-bold shadow-lg text-white"
+                style={{ backgroundColor: '#D08C60' }}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
+                onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
+              >
+                <Phone className="mr-2 w-5 h-5" />
+                Get Help Near Me
+              </Button>
+            </div>
+            <div className="flex flex-wrap justify-center gap-6 mt-6 text-base" style={{ color: '#6B625A' }}>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" style={{ color: '#4CAF50' }} />
+                100% Free
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" style={{ color: '#4CAF50' }} />
+                No Obligation
+              </span>
+              <span className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" style={{ color: '#4CAF50' }} />
+                Licensed Advisors
+              </span>
+            </div>
           </div>
         </section>
 
