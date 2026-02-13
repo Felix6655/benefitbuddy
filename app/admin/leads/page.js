@@ -359,3 +359,24 @@ function AdminLeadsContent() {
     </div>
   );
 }
+
+// Loading fallback for Suspense
+function LeadsLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F1E9' }}>
+      <div className="text-center">
+        <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: '#D08C60' }} />
+        <p className="text-xl" style={{ color: '#6B625A' }}>Loading leads dashboard...</p>
+      </div>
+    </div>
+  );
+}
+
+// Export default with Suspense wrapper
+export default function AdminLeadsPage() {
+  return (
+    <Suspense fallback={<LeadsLoading />}>
+      <AdminLeadsContent />
+    </Suspense>
+  );
+}
