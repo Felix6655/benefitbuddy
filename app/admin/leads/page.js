@@ -325,8 +325,56 @@ function AdminLeadsContent() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Priority Filter Buttons */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Button
+            variant={priorityFilter === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPriorityFilter('all')}
+            style={priorityFilter === 'all' 
+              ? { backgroundColor: '#D08C60', color: 'white' } 
+              : { borderColor: '#E8DDCF' }
+            }
+          >
+            All ({priorityCounts.all})
+          </Button>
+          <Button
+            variant={priorityFilter === 'hot' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPriorityFilter('hot')}
+            style={priorityFilter === 'hot' 
+              ? { backgroundColor: '#C62828', color: 'white' } 
+              : { borderColor: '#FFCDD2', color: '#C62828' }
+            }
+          >
+            🔥 Hot ({priorityCounts.hot})
+          </Button>
+          <Button
+            variant={priorityFilter === 'warm' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPriorityFilter('warm')}
+            style={priorityFilter === 'warm' 
+              ? { backgroundColor: '#E65100', color: 'white' } 
+              : { borderColor: '#FFE0B2', color: '#E65100' }
+            }
+          >
+            ☀️ Warm ({priorityCounts.warm})
+          </Button>
+          <Button
+            variant={priorityFilter === 'cold' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setPriorityFilter('cold')}
+            style={priorityFilter === 'cold' 
+              ? { backgroundColor: '#1565C0', color: 'white' } 
+              : { borderColor: '#BBDEFB', color: '#1565C0' }
+            }
+          >
+            ❄️ Cold ({priorityCounts.cold})
+          </Button>
+        </div>
+
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card style={{ backgroundColor: '#FFFFFF', borderColor: '#E8DDCF' }}>
             <CardContent className="p-4 flex items-center gap-4">
               <div 
@@ -338,6 +386,21 @@ function AdminLeadsContent() {
               <div>
                 <p className="text-sm" style={{ color: '#6B625A' }}>Total Leads</p>
                 <p className="text-2xl font-bold" style={{ color: '#3D3530' }}>{leads.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card style={{ backgroundColor: '#FFEBEE', borderColor: '#FFCDD2' }}>
+            <CardContent className="p-4 flex items-center gap-4">
+              <div 
+                className="w-12 h-12 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: '#FFFFFF' }}
+              >
+                <span className="text-2xl">🔥</span>
+              </div>
+              <div>
+                <p className="text-sm" style={{ color: '#C62828' }}>Hot Leads</p>
+                <p className="text-2xl font-bold" style={{ color: '#C62828' }}>{priorityCounts.hot}</p>
               </div>
             </CardContent>
           </Card>
