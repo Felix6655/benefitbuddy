@@ -400,6 +400,32 @@ function AdminLeadsContent() {
           >
             ❄️ Cold ({priorityCounts.cold})
           </Button>
+
+          {/* Agent Filter Dropdown */}
+          {agents.length > 0 && (
+            <div className="flex items-center gap-2 ml-4 pl-4" style={{ borderLeft: '1px solid #E8DDCF' }}>
+              <span className="text-sm font-medium" style={{ color: '#6B625A' }}>Agent:</span>
+              <select
+                value={agentFilter}
+                onChange={(e) => setAgentFilter(e.target.value)}
+                className="h-8 px-3 rounded-md text-sm font-medium focus:outline-none focus:ring-2"
+                style={{ 
+                  borderColor: agentFilter !== 'all' ? '#D08C60' : '#E8DDCF',
+                  backgroundColor: agentFilter !== 'all' ? '#FFF8F0' : '#FFFFFF',
+                  color: '#3D3530',
+                  border: '1px solid',
+                }}
+              >
+                <option value="all">All Agents</option>
+                <option value="unassigned">Unassigned</option>
+                {agents.map(agent => (
+                  <option key={agent.id} value={agent.id}>
+                    {agent.name} ({leads.filter(l => l.assigned_agent?.id === agent.id).length})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Stats */}
