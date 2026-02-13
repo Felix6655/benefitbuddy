@@ -199,17 +199,18 @@ function AdminLeadsContent() {
 
   // Export leads to CSV
   const exportToCSV = () => {
-    if (leads.length === 0) {
+    if (filteredLeads.length === 0) {
       alert('No leads to export');
       return;
     }
 
     // CSV headers
-    const headers = ['created_at', 'source', 'full_name', 'phone', 'zip_code', 'state', 'turning_65_soon', 'has_medicare_now', 'wants_call_today', 'matched_programs', 'status'];
+    const headers = ['created_at', 'lead_priority', 'source', 'full_name', 'phone', 'zip_code', 'state', 'turning_65_soon', 'has_medicare_now', 'wants_call_today', 'matched_programs', 'status'];
     
     // Build CSV rows
-    const rows = leads.map(lead => [
+    const rows = filteredLeads.map(lead => [
       lead.created_at || '',
+      lead.lead_priority || 'cold',
       lead.source || 'medicare_cta',
       lead.full_name || '',
       formatPhone(lead.phone_display || lead.phone),
