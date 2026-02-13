@@ -3,6 +3,7 @@ import { getCollection } from '@/lib/db';
 import { rateLimit } from '@/lib/rateLimit';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
+import { generateReceiptToken } from '@/lib/tokenUtils';
 
 // Lead validation schema
 const leadSchema = z.object({
@@ -29,6 +30,13 @@ const leadSchema = z.object({
   state: z.string().max(50).optional(),
   page_url: z.string().max(500).optional(),
 });
+
+// Helper to generate receipt URL
+function buildReceiptUrl(leadId, agentId, createdAt) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const token = generateReceiptToken(leadId, agentId, createdAt);
+  return `${baseUrl}/agent/lead/${leadId}?token=${token}`;
+}
 
 // POST /api/leads - Create new Medicare advisor lead
 export async function POST(request) {
