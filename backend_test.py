@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Base URL from environment
-BASE_URL = "https://easy-benefits.preview.emergentagent.com"
+BASE_URL = "https://assist-seniors.preview.emergentagent.com"
 ADMIN_KEY = "ChangeMe-SetStrongKey-2026"
 
 class BenefitBuddyAPITester:
