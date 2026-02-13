@@ -896,6 +896,136 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
                 )}
               </div>
 
+              {/* Pre-qualifying Questions */}
+              <div 
+                className="pt-4 mt-2 space-y-4"
+                style={{ borderTop: '1px solid #E8DDCF' }}
+              >
+                <p className="text-sm font-medium" style={{ color: '#6B625A' }}>
+                  Quick questions to help us serve you better:
+                </p>
+
+                {/* Turning 65 Soon */}
+                <div>
+                  <p className="text-base font-medium mb-2" style={{ color: '#3D3530' }}>
+                    Are you turning 65 in the next 12 months? *
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, turning_65_soon: true }))}
+                      className={`flex-1 h-10 ${formData.turning_65_soon === true ? 'ring-2' : ''}`}
+                      style={{ 
+                        borderColor: errors.turning_65_soon ? '#C62828' : (formData.turning_65_soon === true ? '#D08C60' : '#E8DDCF'),
+                        backgroundColor: formData.turning_65_soon === true ? '#FFF8F0' : 'transparent'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, turning_65_soon: false }))}
+                      className={`flex-1 h-10 ${formData.turning_65_soon === false ? 'ring-2' : ''}`}
+                      style={{ 
+                        borderColor: errors.turning_65_soon ? '#C62828' : (formData.turning_65_soon === false ? '#D08C60' : '#E8DDCF'),
+                        backgroundColor: formData.turning_65_soon === false ? '#FFF8F0' : 'transparent'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      No
+                    </Button>
+                  </div>
+                  {errors.turning_65_soon && (
+                    <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.turning_65_soon}</p>
+                  )}
+                </div>
+
+                {/* Has Medicare Now */}
+                <div>
+                  <p className="text-base font-medium mb-2" style={{ color: '#3D3530' }}>
+                    Do you currently have Medicare? *
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, has_medicare_now: true }))}
+                      className={`flex-1 h-10 ${formData.has_medicare_now === true ? 'ring-2' : ''}`}
+                      style={{ 
+                        borderColor: errors.has_medicare_now ? '#C62828' : (formData.has_medicare_now === true ? '#D08C60' : '#E8DDCF'),
+                        backgroundColor: formData.has_medicare_now === true ? '#FFF8F0' : 'transparent'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, has_medicare_now: false }))}
+                      className={`flex-1 h-10 ${formData.has_medicare_now === false ? 'ring-2' : ''}`}
+                      style={{ 
+                        borderColor: errors.has_medicare_now ? '#C62828' : (formData.has_medicare_now === false ? '#D08C60' : '#E8DDCF'),
+                        backgroundColor: formData.has_medicare_now === false ? '#FFF8F0' : 'transparent'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      No
+                    </Button>
+                  </div>
+                  {errors.has_medicare_now && (
+                    <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.has_medicare_now}</p>
+                  )}
+                </div>
+
+                {/* Wants Call Today */}
+                <div>
+                  <p className="text-base font-medium mb-2" style={{ color: '#3D3530' }}>
+                    Would you like a call today? *
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, wants_call_today: true }))}
+                      className={`flex-1 h-10 ${formData.wants_call_today === true ? 'ring-2' : ''}`}
+                      style={{ 
+                        borderColor: errors.wants_call_today ? '#C62828' : (formData.wants_call_today === true ? '#D08C60' : '#E8DDCF'),
+                        backgroundColor: formData.wants_call_today === true ? '#FFF8F0' : 'transparent'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData(prev => ({ ...prev, wants_call_today: false }))}
+                      className={`flex-1 h-10 ${formData.wants_call_today === false ? 'ring-2' : ''}`}
+                      style={{ 
+                        borderColor: errors.wants_call_today ? '#C62828' : (formData.wants_call_today === false ? '#D08C60' : '#E8DDCF'),
+                        backgroundColor: formData.wants_call_today === false ? '#FFF8F0' : 'transparent'
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      No
+                    </Button>
+                  </div>
+                  {errors.wants_call_today && (
+                    <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.wants_call_today}</p>
+                  )}
+                </div>
+              </div>
+
               <div className="flex items-start gap-3 pt-2">
                 <Checkbox
                   id="consent"
