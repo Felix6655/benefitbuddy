@@ -491,15 +491,21 @@ function AdminLeadsContent() {
         )}
 
         {/* Leads table */}
-        {!loading && !error && leads.length > 0 && (
+        {!loading && !error && filteredLeads.length > 0 && (
           <div className="space-y-4">
-            {leads.map((lead) => {
+            {filteredLeads.map((lead) => {
               const statusStyle = getStatusColor(lead.status);
+              const priorityStyle = getPriorityColor(lead.lead_priority);
               return (
                 <Card 
                   key={lead.id}
                   className="border-2 overflow-hidden"
-                  style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
+                  style={{ 
+                    borderColor: lead.lead_priority === 'hot' ? '#FFCDD2' : '#E8DDCF', 
+                    backgroundColor: '#FFFFFF',
+                    borderLeftWidth: lead.lead_priority === 'hot' ? '4px' : '2px',
+                    borderLeftColor: lead.lead_priority === 'hot' ? '#C62828' : (lead.lead_priority === 'warm' ? '#E65100' : '#E8DDCF'),
+                  }}
                 >
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row">
@@ -507,11 +513,20 @@ function AdminLeadsContent() {
                       <div className="flex-1 p-4 md:p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div>
-                            <h3 className="text-lg font-bold" style={{ color: '#3D3530' }}>
-                              {lead.full_name}
-                            </h3>
+                            <div className="flex items-center gap-2 mb-1">
+                              <h3 className="text-lg font-bold" style={{ color: '#3D3530' }}>
+                                {lead.full_name}
+                              </h3>
+                              {/* Priority Badge */}
+                              <span 
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold"
+                                style={{ backgroundColor: priorityStyle.bg, color: priorityStyle.color }}
+                              >
+                                {priorityStyle.icon} {lead.lead_priority?.toUpperCase() || 'COLD'}
+                              </span>
+                            </div>
                             <span 
-                              className="inline-block px-2 py-0.5 rounded text-xs font-medium mt-1"
+                              className="inline-block px-2 py-0.5 rounded text-xs font-medium"
                               style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}
                             >
                               {lead.status?.toUpperCase() || 'NEW'}
