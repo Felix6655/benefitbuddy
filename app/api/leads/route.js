@@ -112,10 +112,17 @@ export async function POST(request) {
         );
       }
     }
+    const createdAt = new Date().toISOString();
+    const leadId = uuidv4();
+    
+    // Generate receipt token if agent is assigned
+    const receiptToken = assigned_agent 
+      ? generateReceiptToken(leadId, assigned_agent.id, createdAt)
+      : null;
     
     // Create lead document
     const lead = {
-      id: uuidv4(),
+      id: leadId,
       full_name: validData.full_name.trim(),
       phone: validData.phone.replace(/[^\d]/g, ''), // Store digits only
       phone_display: validData.phone, // Keep formatted version for display
@@ -135,6 +142,8 @@ export async function POST(request) {
         phone: assigned_agent.phone,
         email: assigned_agent.email,
       } : null,
+      // Receipt token for agent access
+      receipt_token: receiptToken,
       // Delivery tracking
       delivery: {
         sent_to_n8n: false,
@@ -157,7 +166,7 @@ export async function POST(request) {
       page_url: validData.page_url || null,
       matched_programs: validData.matched_programs || [],
       status: 'new',
-      created_at: new Date().toISOString(),
+      created_at: createdAt,
       ip_hash: hashIP(ip), // Store hashed IP for fraud detection
     };
     
