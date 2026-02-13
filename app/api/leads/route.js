@@ -180,68 +180,99 @@ export async function POST(request) {
       const agentWebhookId = `${lead.id}_${assigned_agent.id}`;
       const receiptUrl = buildReceiptUrl(lead.id, assigned_agent.id, lead.created_at);
       
-      try {
-        const agentWebhookResponse = await fetch(assigned_agent.webhook_url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            source: 'benefitbuddy_leads',
-            type: 'medicare_lead',
-            event_name: 'medicare_lead_hot_assigned',
-            lead_priority: 'hot',
-            // Idempotency fields
-            lead_id: lead.id,
-            delivery_webhook_id: agentWebhookId,
-            // Secure receipt URL for agent
-            receipt_url: receiptUrl,
-            assigned_agent: {
-              id: assigned_agent.id,
-              name: assigned_agent.name,
-            },
-            lead: {
-              id: lead.id,
-              full_name: lead.full_name,
-              phone: lead.phone_display,
-              zip_code: lead.zip_code,
-              state: lead.state,
-              turning_65_soon: lead.turning_65_soon,
-              has_medicare_now: lead.has_medicare_now,
-              wants_call_today: lead.wants_call_today,
-              source: lead.source,
-              created_at: lead.created_at,
-            },
-          }),
-        });
-
-        // Update agent-specific delivery status
+      // Check agent credits before sending
+      const agentCredits = assigned_agent.credits_remaining || 0;
+      
+      if (agentCredits <= 0) {
+        // No credits - hold the lead
         await collection.updateOne(
           { id: lead.id },
           { 
             $set: { 
-              'delivery.agent_webhook_sent': agentWebhookResponse.ok,
-              'delivery.agent_webhook_sent_at': new Date().toISOString(),
-              'delivery.agent_webhook_error': agentWebhookResponse.ok ? null : `HTTP ${agentWebhookResponse.status}`,
-              'delivery.agent_last_attempt_at': new Date().toISOString(),
-              'delivery.agent_webhook_id': agentWebhookId,
-            },
-            $inc: { 'delivery.agent_attempt_count': 1 }
-          }
-        );
-      } catch (err) {
-        console.error('Agent webhook error:', err.message);
-        await collection.updateOne(
-          { id: lead.id },
-          { 
-            $set: { 
+              status: 'on_hold_no_credits',
               'delivery.agent_webhook_sent': false,
-              'delivery.agent_webhook_sent_at': new Date().toISOString(),
-              'delivery.agent_webhook_error': err.message,
+              'delivery.agent_webhook_error': 'No credits - lead on hold',
               'delivery.agent_last_attempt_at': new Date().toISOString(),
               'delivery.agent_webhook_id': agentWebhookId,
-            },
-            $inc: { 'delivery.agent_attempt_count': 1 }
+            }
           }
         );
+      } else {
+        // Has credits - attempt delivery
+        try {
+          const agentWebhookResponse = await fetch(assigned_agent.webhook_url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              source: 'benefitbuddy_leads',
+              type: 'medicare_lead',
+              event_name: 'medicare_lead_hot_assigned',
+              lead_priority: 'hot',
+              // Idempotency fields
+              lead_id: lead.id,
+              delivery_webhook_id: agentWebhookId,
+              // Secure receipt URL for agent
+              receipt_url: receiptUrl,
+              assigned_agent: {
+                id: assigned_agent.id,
+                name: assigned_agent.name,
+              },
+              lead: {
+                id: lead.id,
+                full_name: lead.full_name,
+                phone: lead.phone_display,
+                zip_code: lead.zip_code,
+                state: lead.state,
+                turning_65_soon: lead.turning_65_soon,
+                has_medicare_now: lead.has_medicare_now,
+                wants_call_today: lead.wants_call_today,
+                source: lead.source,
+                created_at: lead.created_at,
+              },
+            }),
+          });
+
+          // Update agent-specific delivery status
+          await collection.updateOne(
+            { id: lead.id },
+            { 
+              $set: { 
+                'delivery.agent_webhook_sent': agentWebhookResponse.ok,
+                'delivery.agent_webhook_sent_at': new Date().toISOString(),
+                'delivery.agent_webhook_error': agentWebhookResponse.ok ? null : `HTTP ${agentWebhookResponse.status}`,
+                'delivery.agent_last_attempt_at': new Date().toISOString(),
+                'delivery.agent_webhook_id': agentWebhookId,
+              },
+              $inc: { 'delivery.agent_attempt_count': 1 }
+            }
+          );
+
+          // Decrement credits only on successful delivery
+          if (agentWebhookResponse.ok) {
+            await agentsCollection.updateOne(
+              { id: assigned_agent.id },
+              { 
+                $inc: { credits_remaining: -1 },
+                $set: { credits_updated_at: new Date().toISOString() }
+              }
+            );
+          }
+        } catch (err) {
+          console.error('Agent webhook error:', err.message);
+          await collection.updateOne(
+            { id: lead.id },
+            { 
+              $set: { 
+                'delivery.agent_webhook_sent': false,
+                'delivery.agent_webhook_sent_at': new Date().toISOString(),
+                'delivery.agent_webhook_error': err.message,
+                'delivery.agent_last_attempt_at': new Date().toISOString(),
+                'delivery.agent_webhook_id': agentWebhookId,
+              },
+              $inc: { 'delivery.agent_attempt_count': 1 }
+            }
+          );
+        }
       }
     }
     
