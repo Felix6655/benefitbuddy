@@ -112,6 +112,7 @@ function HomepageLeadModal({ isOpen, onClose }) {
           zip_code: formData.zip_code,
           consent: formData.consent,
           source: 'homepage_cta',
+          page_url: typeof window !== 'undefined' ? window.location.href : null,
         }),
       });
 
