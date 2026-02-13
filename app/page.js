@@ -841,6 +841,12 @@ export default function HomePage() {
       </main>
 
       <Footer />
+
+      {/* Medicare Lead Capture Modal */}
+      <HomepageLeadModal 
+        isOpen={isLeadModalOpen} 
+        onClose={() => setIsLeadModalOpen(false)} 
+      />
     </div>
   );
 }
