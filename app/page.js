@@ -42,6 +42,9 @@ function HomepageLeadModal({ isOpen, onClose }) {
     full_name: '',
     phone: '',
     zip_code: '',
+    turning_65_soon: null,
+    has_medicare_now: null,
+    wants_call_today: null,
     consent: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,6 +58,9 @@ function HomepageLeadModal({ isOpen, onClose }) {
         full_name: '',
         phone: '',
         zip_code: '',
+        turning_65_soon: null,
+        has_medicare_now: null,
+        wants_call_today: null,
         consent: false,
       });
       setSubmitResult(null);
