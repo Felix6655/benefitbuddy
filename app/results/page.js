@@ -623,6 +623,9 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
     full_name: '',
     phone: '',
     zip_code: userZip || '',
+    turning_65_soon: null,
+    has_medicare_now: null,
+    wants_call_today: null,
     consent: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -636,6 +639,9 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
         full_name: '',
         phone: '',
         zip_code: userZip || '',
+        turning_65_soon: null,
+        has_medicare_now: null,
+        wants_call_today: null,
         consent: false,
       });
       setSubmitResult(null);
