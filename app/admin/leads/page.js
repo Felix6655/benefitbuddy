@@ -267,16 +267,28 @@ function AdminLeadsContent() {
               <span className="font-bold" style={{ color: '#3D3530' }}>Leads Dashboard</span>
             </div>
           </div>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={fetchLeads}
-            disabled={loading}
-            style={{ borderColor: '#E8DDCF' }}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={exportToCSV}
+              disabled={loading || leads.length === 0}
+              style={{ borderColor: '#D08C60', color: '#D08C60' }}
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Export CSV
+            </Button>
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={fetchLeads}
+              disabled={loading}
+              style={{ borderColor: '#E8DDCF' }}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
       </header>
 
