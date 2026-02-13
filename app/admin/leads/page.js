@@ -181,7 +181,7 @@ function AdminLeadsContent() {
     }
 
     // CSV headers
-    const headers = ['created_at', 'source', 'full_name', 'phone', 'zip_code', 'state', 'matched_programs', 'status'];
+    const headers = ['created_at', 'source', 'full_name', 'phone', 'zip_code', 'state', 'turning_65_soon', 'has_medicare_now', 'wants_call_today', 'matched_programs', 'status'];
     
     // Build CSV rows
     const rows = leads.map(lead => [
@@ -191,6 +191,9 @@ function AdminLeadsContent() {
       formatPhone(lead.phone_display || lead.phone),
       lead.zip_code || '',
       lead.state || '',
+      lead.turning_65_soon === true ? 'Yes' : (lead.turning_65_soon === false ? 'No' : ''),
+      lead.has_medicare_now === true ? 'Yes' : (lead.has_medicare_now === false ? 'No' : ''),
+      lead.wants_call_today === true ? 'Yes' : (lead.wants_call_today === false ? 'No' : ''),
       (lead.matched_programs || []).join('; '),
       lead.status || 'new',
     ]);
