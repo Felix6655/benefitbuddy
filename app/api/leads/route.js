@@ -83,6 +83,27 @@ export async function POST(request) {
     } else if (validData.turning_65_soon === true || validData.has_medicare_now === true) {
       lead_priority = 'warm';
     }
+
+    // Find assigned agent for HOT leads based on ZIP code
+    let assigned_agent = null;
+    if (lead_priority === 'hot') {
+      const agentsCollection = await getCollection('agents');
+      const zipCode = validData.zip_code.slice(0, 5);
+      
+      // Find active agent covering this ZIP
+      assigned_agent = await agentsCollection.findOne({
+        is_active: true,
+        covered_zips: zipCode,
+      });
+      
+      // Increment agent's lead count if found
+      if (assigned_agent) {
+        await agentsCollection.updateOne(
+          { id: assigned_agent.id },
+          { $inc: { leads_assigned: 1 } }
+        );
+      }
+    }
     
     // Create lead document
     const lead = {
@@ -99,11 +120,21 @@ export async function POST(request) {
       wants_call_today: validData.wants_call_today,
       // Lead priority
       lead_priority: lead_priority,
+      // Agent assignment
+      assigned_agent: assigned_agent ? {
+        id: assigned_agent.id,
+        name: assigned_agent.name,
+        phone: assigned_agent.phone,
+        email: assigned_agent.email,
+      } : null,
       // Delivery tracking
       delivery: {
         sent_to_n8n: false,
         sent_at: null,
         error: null,
+        agent_webhook_sent: false,
+        agent_webhook_sent_at: null,
+        agent_webhook_error: null,
       },
       // Meta fields
       consent: validData.consent,
@@ -119,8 +150,64 @@ export async function POST(request) {
     // Save to database
     const collection = await getCollection('leads');
     await collection.insertOne(lead);
+
+    // Send to agent-specific webhook for HOT leads with assigned agent
+    if (lead_priority === 'hot' && assigned_agent && assigned_agent.webhook_url) {
+      try {
+        const agentWebhookResponse = await fetch(assigned_agent.webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'benefitbuddy_leads',
+            type: 'medicare_lead',
+            event_name: 'medicare_lead_hot_assigned',
+            lead_priority: 'hot',
+            assigned_agent: {
+              id: assigned_agent.id,
+              name: assigned_agent.name,
+            },
+            lead: {
+              id: lead.id,
+              full_name: lead.full_name,
+              phone: lead.phone_display,
+              zip_code: lead.zip_code,
+              state: lead.state,
+              turning_65_soon: lead.turning_65_soon,
+              has_medicare_now: lead.has_medicare_now,
+              wants_call_today: lead.wants_call_today,
+              source: lead.source,
+              created_at: lead.created_at,
+            },
+          }),
+        });
+
+        // Update agent-specific delivery status
+        await collection.updateOne(
+          { id: lead.id },
+          { 
+            $set: { 
+              'delivery.agent_webhook_sent': agentWebhookResponse.ok,
+              'delivery.agent_webhook_sent_at': new Date().toISOString(),
+              'delivery.agent_webhook_error': agentWebhookResponse.ok ? null : `HTTP ${agentWebhookResponse.status}`,
+            } 
+          }
+        );
+      } catch (err) {
+        console.error('Agent webhook error:', err.message);
+        await collection.updateOne(
+          { id: lead.id },
+          { 
+            $set: { 
+              'delivery.agent_webhook_sent': false,
+              'delivery.agent_webhook_sent_at': new Date().toISOString(),
+              'delivery.agent_webhook_error': err.message,
+            } 
+          }
+        );
+      }
+    }
     
-    // Forward to n8n webhook if configured
+    // Forward to main n8n webhook if configured
     const webhookUrl = process.env.N8N_LEADS_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
     if (webhookUrl) {
       // Determine event name based on priority
