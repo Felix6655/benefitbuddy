@@ -209,6 +209,47 @@ function AdminAgentsContent() {
     }
   };
 
+  const handleAddCredits = async (agentId, amount) => {
+    setUpdatingCredits(agentId);
+    try {
+      const response = await fetch(`/api/admin/agents?key=${encodeURIComponent(adminKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: agentId, action: 'add_credits', amount }),
+      });
+      if (!response.ok) throw new Error('Failed to add credits');
+      await fetchAgents();
+    } catch (err) {
+      alert('Error adding credits: ' + err.message);
+    } finally {
+      setUpdatingCredits(null);
+    }
+  };
+
+  const handleSetCredits = async (agentId) => {
+    const amount = parseInt(customCredits, 10);
+    if (isNaN(amount) || amount < 0) {
+      alert('Please enter a valid number (0 or greater)');
+      return;
+    }
+    setUpdatingCredits(agentId);
+    try {
+      const response = await fetch(`/api/admin/agents?key=${encodeURIComponent(adminKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: agentId, action: 'set_credits', amount }),
+      });
+      if (!response.ok) throw new Error('Failed to set credits');
+      await fetchAgents();
+      setCreditModalAgentId(null);
+      setCustomCredits('');
+    } catch (err) {
+      alert('Error setting credits: ' + err.message);
+    } finally {
+      setUpdatingCredits(null);
+    }
+  };
+
   // Unauthorized state
   if (!isAuthorized && !loading) {
     return (
