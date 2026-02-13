@@ -1061,11 +1061,25 @@ export default function ResultsPage() {
     window.print();
   };
 
-  // Check if Medicare Savings Programs is in results (show CTA for seniors)
+  // Check if Medicare CTA should show - expanded triggers
   const hasMedicareProgram = matches.likelyMatches.some(m => m.program.id === 'medicare_savings') ||
                               matches.alsoCheck.some(m => m.program.id === 'medicare_savings');
   const isSenior = normalizedData?.ageRange === '65plus';
-  const showMedicareCTA = hasMedicareProgram || isSenior;
+  
+  // Additional triggers: healthcare-related needs or situations
+  const healthcareRelatedNeeds = ['healthcare', 'prescriptions', 'medical'];
+  const hasHealthcareNeed = normalizedData?.needs?.some(need => 
+    healthcareRelatedNeeds.some(h => need.toLowerCase().includes(h))
+  );
+  const hasDisability = normalizedData?.disabled === true;
+  const hasMedicaidMatch = matches.likelyMatches.some(m => m.program.id === 'medicaid') ||
+                           matches.alsoCheck.some(m => m.program.id === 'medicaid');
+  const hasSSIMatch = matches.likelyMatches.some(m => m.program.id === 'ssi') ||
+                      matches.alsoCheck.some(m => m.program.id === 'ssi');
+  
+  // Show CTA for: seniors, Medicare/Medicaid/SSI matches, healthcare needs, or disability
+  const showMedicareCTA = hasMedicareProgram || isSenior || hasHealthcareNeed || 
+                          hasDisability || hasMedicaidMatch || hasSSIMatch;
 
   // Get list of matched program IDs for lead tracking
   const matchedProgramIds = [
