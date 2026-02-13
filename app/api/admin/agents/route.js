@@ -14,6 +14,8 @@ const agentSchema = z.object({
   covered_zips: z.array(z.string()).min(1, 'At least one ZIP code required'),
   state: z.string().max(50).optional(),
   is_active: z.boolean().default(true),
+  credits_remaining: z.number().int().min(0).optional(),
+  billing_notes: z.string().max(500).optional(),
 });
 
 // GET /api/admin/agents - Get all agents
@@ -75,6 +77,10 @@ export async function POST(request) {
       is_active: data.is_active !== false,
       leads_assigned: 0,
       leads_converted: 0,
+      // Credit system
+      credits_remaining: data.credits_remaining || 0,
+      credits_updated_at: new Date().toISOString(),
+      billing_notes: data.billing_notes || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -103,20 +109,81 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { id, ...updates } = body;
+    const { id, action, ...updates } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Agent ID required' }, { status: 400 });
     }
 
+    const collection = await getCollection('agents');
+
+    // Handle credit actions
+    if (action === 'add_credits') {
+      const amount = updates.amount || 0;
+      if (amount <= 0) {
+        return NextResponse.json({ error: 'Invalid credit amount' }, { status: 400 });
+      }
+      
+      const result = await collection.updateOne(
+        { id },
+        { 
+          $inc: { credits_remaining: amount },
+          $set: { 
+            credits_updated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+      }
+
+      const updatedAgent = await collection.findOne({ id });
+      return NextResponse.json({ 
+        success: true, 
+        id, 
+        credits_remaining: updatedAgent.credits_remaining 
+      });
+    }
+
+    if (action === 'set_credits') {
+      const amount = updates.amount;
+      if (typeof amount !== 'number' || amount < 0) {
+        return NextResponse.json({ error: 'Invalid credit amount' }, { status: 400 });
+      }
+      
+      const result = await collection.updateOne(
+        { id },
+        { 
+          $set: { 
+            credits_remaining: amount,
+            credits_updated_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, id, credits_remaining: amount });
+    }
+
+    // Regular update
     // Normalize ZIP codes if provided
     if (updates.covered_zips) {
       updates.covered_zips = updates.covered_zips.map(z => z.trim().slice(0, 5));
     }
 
+    // Track credit changes
+    if (typeof updates.credits_remaining === 'number') {
+      updates.credits_updated_at = new Date().toISOString();
+    }
+
     updates.updated_at = new Date().toISOString();
 
-    const collection = await getCollection('agents');
     const result = await collection.updateOne(
       { id },
       { $set: updates }
