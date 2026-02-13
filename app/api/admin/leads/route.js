@@ -199,6 +199,147 @@ export async function PATCH(request) {
       }
     }
 
+    // Handle send_now action for on-hold leads (admin sends to agent webhook)
+    if (action === 'send_now') {
+      const lead = await collection.findOne({ id: id });
+      if (!lead) {
+        return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+      }
+
+      // Check if lead has assigned agent
+      if (!lead.assigned_agent?.id) {
+        return NextResponse.json({ error: 'Lead has no assigned agent' }, { status: 400 });
+      }
+
+      // Get agent and check credits
+      const agentsCollection = await getCollection('agents');
+      const agent = await agentsCollection.findOne({ id: lead.assigned_agent.id });
+      
+      if (!agent) {
+        return NextResponse.json({ error: 'Assigned agent not found' }, { status: 404 });
+      }
+
+      if ((agent.credits_remaining || 0) <= 0) {
+        return NextResponse.json({ 
+          error: 'Agent has no credits remaining',
+          credits_remaining: agent.credits_remaining || 0
+        }, { status: 400 });
+      }
+
+      // Check if agent has webhook URL
+      if (!agent.webhook_url) {
+        return NextResponse.json({ error: 'Agent has no webhook URL configured' }, { status: 400 });
+      }
+
+      // Attempt delivery to agent webhook
+      const agentWebhookId = `${lead.id}_${agent.id}_admin_${Date.now()}`;
+      const receiptUrl = buildReceiptUrl(lead.id, agent.id, lead.created_at);
+
+      try {
+        const agentWebhookResponse = await fetch(agent.webhook_url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'benefitbuddy_leads',
+            type: 'medicare_lead',
+            event_name: 'medicare_lead_hot_assigned',
+            lead_priority: lead.lead_priority,
+            lead_id: lead.id,
+            delivery_webhook_id: agentWebhookId,
+            receipt_url: receiptUrl,
+            is_admin_send: true,
+            assigned_agent: {
+              id: agent.id,
+              name: agent.name,
+            },
+            lead: {
+              id: lead.id,
+              full_name: lead.full_name,
+              phone: lead.phone_display || lead.phone,
+              zip_code: lead.zip_code,
+              state: lead.state,
+              turning_65_soon: lead.turning_65_soon,
+              has_medicare_now: lead.has_medicare_now,
+              wants_call_today: lead.wants_call_today,
+              source: lead.source,
+              created_at: lead.created_at,
+            },
+          }),
+        });
+
+        if (agentWebhookResponse.ok) {
+          // Success - update lead and decrement credits
+          await collection.updateOne(
+            { id: id },
+            { 
+              $set: { 
+                status: 'new', // Reset from on_hold
+                'delivery.agent_webhook_sent': true,
+                'delivery.agent_webhook_sent_at': new Date().toISOString(),
+                'delivery.agent_webhook_error': null,
+                'delivery.agent_last_attempt_at': new Date().toISOString(),
+                'delivery.agent_webhook_id': agentWebhookId,
+              },
+              $inc: { 'delivery.agent_attempt_count': 1 }
+            }
+          );
+
+          // Decrement agent credits
+          await agentsCollection.updateOne(
+            { id: agent.id },
+            { 
+              $inc: { credits_remaining: -1 },
+              $set: { credits_updated_at: new Date().toISOString() }
+            }
+          );
+
+          return NextResponse.json({
+            success: true,
+            id: id,
+            message: 'Lead sent to agent successfully',
+            credits_remaining: (agent.credits_remaining || 1) - 1,
+          });
+        } else {
+          // Failed delivery
+          await collection.updateOne(
+            { id: id },
+            { 
+              $set: { 
+                'delivery.agent_webhook_sent': false,
+                'delivery.agent_webhook_error': `HTTP ${agentWebhookResponse.status}`,
+                'delivery.agent_last_attempt_at': new Date().toISOString(),
+              },
+              $inc: { 'delivery.agent_attempt_count': 1 }
+            }
+          );
+
+          return NextResponse.json({
+            success: false,
+            id: id,
+            message: `Delivery failed: HTTP ${agentWebhookResponse.status}`,
+          });
+        }
+      } catch (err) {
+        await collection.updateOne(
+          { id: id },
+          { 
+            $set: { 
+              'delivery.agent_webhook_sent': false,
+              'delivery.agent_webhook_error': err.message,
+              'delivery.agent_last_attempt_at': new Date().toISOString(),
+            },
+            $inc: { 'delivery.agent_attempt_count': 1 }
+          }
+        );
+
+        return NextResponse.json({
+          success: false,
+          id: id,
+          message: `Delivery failed: ${err.message}`,
+        });
+      }
+    }
+
     // Handle status update
     if (!status || !VALID_STATUSES.includes(status)) {
       return NextResponse.json(
