@@ -264,6 +264,20 @@ function AdminContent() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Quick Links */}
+        <div className="flex flex-wrap gap-3 mb-6">
+          <Link href={`/admin/leads?key=${adminKey}`}>
+            <Button variant="outline" className="border-[#D08C60] text-[#D08C60] hover:bg-[#FFF8F0]">
+              🔥 Medicare Leads
+            </Button>
+          </Link>
+          <Link href={`/admin/agents?key=${adminKey}`}>
+            <Button variant="outline" className="border-[#D08C60] text-[#D08C60] hover:bg-[#FFF8F0]">
+              👥 Agent Management
+            </Button>
+          </Link>
+        </div>
+
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-[#E8DDCF]">
