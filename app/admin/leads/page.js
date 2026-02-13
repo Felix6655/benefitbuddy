@@ -250,6 +250,48 @@ function AdminLeadsContent() {
     }
   };
 
+  // Send now for on-hold leads (sends to agent webhook)
+  const sendNow = async (leadId) => {
+    setSendingId(leadId);
+    try {
+      const response = await fetch(`/api/admin/leads?key=${encodeURIComponent(adminKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId, action: 'send_now' }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setLeads(prevLeads => 
+          prevLeads.map(lead => 
+            lead.id === leadId 
+              ? { 
+                  ...lead, 
+                  status: 'new',
+                  delivery: {
+                    ...lead.delivery,
+                    agent_webhook_sent: true,
+                    agent_webhook_sent_at: new Date().toISOString(),
+                    agent_webhook_error: null,
+                    agent_attempt_count: (lead.delivery?.agent_attempt_count || 0) + 1,
+                  }
+                }
+              : lead
+          )
+        );
+        alert('Lead sent to agent successfully!');
+      } else {
+        alert(data.message || data.error || 'Send failed');
+      }
+    } catch (err) {
+      alert('Error sending lead: ' + err.message);
+    } finally {
+      setSendingId(null);
+    }
+  };
+
   // Get delivery status display
   const getDeliveryStatus = (lead) => {
     const delivery = lead.delivery || {};
@@ -269,6 +311,21 @@ function AdminLeadsContent() {
       return { status: 'pending', label: `Pending (${attemptCount}/3)`, color: '#1565C0', bg: '#E3F2FD' };
     }
     return { status: 'not_sent', label: 'Not Sent', color: '#546E7A', bg: '#ECEFF1' };
+  };
+
+  // Get status badge for display
+  const getStatusBadge = (lead) => {
+    if (lead.status === 'on_hold_no_credits') {
+      return { label: 'On Hold (No Credits)', color: '#E65100', bg: '#FFF3E0' };
+    }
+    const statusColors = {
+      new: { bg: '#E3F2FD', color: '#1565C0' },
+      contacted: { bg: '#E8F5E9', color: '#2E7D32' },
+      converted: { bg: '#F3E5F5', color: '#7B1FA2' },
+      lost: { bg: '#FFEBEE', color: '#C62828' },
+    };
+    const colors = statusColors[lead.status] || statusColors.new;
+    return { label: (lead.status || 'new').toUpperCase(), ...colors };
   };
 
   // Generate receipt URL for a lead (uses stored token)
