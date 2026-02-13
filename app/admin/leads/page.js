@@ -29,6 +29,7 @@ function AdminLeadsContent() {
   const adminKey = searchParams.get('key');
   
   const [leads, setLeads] = useState([]);
+  const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
