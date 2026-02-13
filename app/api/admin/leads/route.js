@@ -1,10 +1,18 @@
 import { NextResponse } from 'next/server';
 import { getCollection } from '@/lib/db';
+import { generateReceiptToken } from '@/lib/tokenUtils';
 
 const ADMIN_KEY = process.env.ADMIN_KEY || 'ChangeMe-SetStrongKey-2026';
 
 // Valid lead statuses
-const VALID_STATUSES = ['new', 'contacted', 'converted', 'lost'];
+const VALID_STATUSES = ['new', 'contacted', 'converted', 'lost', 'on_hold_no_credits'];
+
+// Helper to build receipt URL
+function buildReceiptUrl(leadId, agentId, createdAt) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const token = generateReceiptToken(leadId, agentId, createdAt);
+  return `${baseUrl}/agent/lead/${leadId}?token=${token}`;
+}
 
 // GET /api/admin/leads - Get all leads (admin only)
 export async function GET(request) {
