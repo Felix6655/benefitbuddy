@@ -809,6 +809,50 @@ function AdminLeadsContent() {
                           </div>
                         )}
 
+                        {/* Delivery Status */}
+                        {(() => {
+                          const deliveryStatus = getDeliveryStatus(lead);
+                          return (
+                            <div className="mt-4 pt-4" style={{ borderTop: '1px solid #E8DDCF' }}>
+                              <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                  <Send className="w-4 h-4" style={{ color: '#6B625A' }} />
+                                  <span className="text-sm font-medium" style={{ color: '#6B625A' }}>Delivery:</span>
+                                  <span 
+                                    className="px-2 py-0.5 rounded text-xs font-medium"
+                                    style={{ backgroundColor: deliveryStatus.bg, color: deliveryStatus.color }}
+                                  >
+                                    {deliveryStatus.label}
+                                  </span>
+                                </div>
+                                {lead.delivery?.error && (
+                                  <span className="text-xs" style={{ color: '#C62828' }}>
+                                    {lead.delivery.error}
+                                  </span>
+                                )}
+                                {/* Retry button - show if not delivered and attempts < 3 OR if max attempts reached */}
+                                {deliveryStatus.status !== 'delivered' && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => retryDelivery(lead.id)}
+                                    disabled={retryingId === lead.id}
+                                    className="h-7 text-xs"
+                                    style={{ borderColor: '#1565C0', color: '#1565C0' }}
+                                  >
+                                    {retryingId === lead.id ? (
+                                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                                    ) : (
+                                      <RotateCcw className="w-3 h-3 mr-1" />
+                                    )}
+                                    {deliveryStatus.status === 'max_attempts' ? 'Reset & Retry' : 'Retry'}
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Action Buttons */}
                         <div className="mt-4 pt-4 flex flex-wrap gap-2" style={{ borderTop: '1px solid #E8DDCF' }}>
                           <Button
