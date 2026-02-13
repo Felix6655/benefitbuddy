@@ -18,6 +18,10 @@ const leadSchema = z.object({
   consent: z.boolean().refine(val => val === true, {
     message: 'You must agree to be contacted',
   }),
+  // Pre-qualifying questions (required)
+  turning_65_soon: z.boolean(),
+  has_medicare_now: z.boolean(),
+  wants_call_today: z.boolean(),
   // Optional fields
   email: z.string().email().optional().or(z.literal('')),
   source: z.string().max(50).optional(),
