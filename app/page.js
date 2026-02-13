@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Accordion,
   AccordionContent,
@@ -23,6 +26,11 @@ import {
   ZoomIn,
   ZoomOut,
   ExternalLink,
+  Phone,
+  X,
+  UserCheck,
+  CheckCircle,
+  Loader2,
 } from 'lucide-react';
 
 // Accessibility Controls Component
