@@ -24,6 +24,8 @@ import {
   Check,
   Users,
   Globe,
+  CreditCard,
+  DollarSign,
 } from 'lucide-react';
 
 function AdminAgentsContent() {
@@ -36,6 +38,9 @@ function AdminAgentsContent() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [creditModalAgentId, setCreditModalAgentId] = useState(null);
+  const [customCredits, setCustomCredits] = useState('');
+  const [updatingCredits, setUpdatingCredits] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
