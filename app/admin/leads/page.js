@@ -72,8 +72,22 @@ function AdminLeadsContent() {
     }
   };
 
+  const fetchAgents = async () => {
+    if (!adminKey) return;
+    try {
+      const response = await fetch(`/api/admin/agents?key=${encodeURIComponent(adminKey)}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAgents(data.agents || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch agents:', err);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
+    fetchAgents();
   }, [adminKey]);
 
   // Format date for display
