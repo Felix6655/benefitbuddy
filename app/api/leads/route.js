@@ -169,6 +169,7 @@ export async function POST(request) {
     // Check delivery lock - skip if already sent or max attempts reached
     if (lead_priority === 'hot' && assigned_agent && assigned_agent.webhook_url) {
       const agentWebhookId = `${lead.id}_${assigned_agent.id}`;
+      const receiptUrl = buildReceiptUrl(lead.id, assigned_agent.id, lead.created_at);
       
       try {
         const agentWebhookResponse = await fetch(assigned_agent.webhook_url, {
@@ -182,6 +183,8 @@ export async function POST(request) {
             // Idempotency fields
             lead_id: lead.id,
             delivery_webhook_id: agentWebhookId,
+            // Secure receipt URL for agent
+            receipt_url: receiptUrl,
             assigned_agent: {
               id: assigned_agent.id,
               name: assigned_agent.name,
