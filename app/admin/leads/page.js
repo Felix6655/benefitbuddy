@@ -144,6 +144,11 @@ function AdminLeadsContent() {
       `Phone: ${formatPhone(lead.phone_display || lead.phone)}`,
       `ZIP: ${lead.zip_code}`,
       lead.state ? `State: ${lead.state}` : null,
+      '---',
+      lead.turning_65_soon !== undefined ? `Turning 65 Soon: ${lead.turning_65_soon ? 'Yes' : 'No'}` : null,
+      lead.has_medicare_now !== undefined ? `Has Medicare: ${lead.has_medicare_now ? 'Yes' : 'No'}` : null,
+      lead.wants_call_today !== undefined ? `Wants Call Today: ${lead.wants_call_today ? 'Yes' : 'No'}` : null,
+      '---',
       `Source: ${lead.source || 'medicare_cta'}`,
       lead.matched_programs?.length > 0 
         ? `Programs: ${lead.matched_programs.join(', ')}` 
