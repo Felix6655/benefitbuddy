@@ -158,7 +158,10 @@ export async function POST(request) {
     await collection.insertOne(lead);
 
     // Send to agent-specific webhook for HOT leads with assigned agent
+    // Check delivery lock - skip if already sent or max attempts reached
     if (lead_priority === 'hot' && assigned_agent && assigned_agent.webhook_url) {
+      const agentWebhookId = `${lead.id}_${assigned_agent.id}`;
+      
       try {
         const agentWebhookResponse = await fetch(assigned_agent.webhook_url, {
           method: 'POST',
@@ -168,6 +171,9 @@ export async function POST(request) {
             type: 'medicare_lead',
             event_name: 'medicare_lead_hot_assigned',
             lead_priority: 'hot',
+            // Idempotency fields
+            lead_id: lead.id,
+            delivery_webhook_id: agentWebhookId,
             assigned_agent: {
               id: assigned_agent.id,
               name: assigned_agent.name,
@@ -195,7 +201,10 @@ export async function POST(request) {
               'delivery.agent_webhook_sent': agentWebhookResponse.ok,
               'delivery.agent_webhook_sent_at': new Date().toISOString(),
               'delivery.agent_webhook_error': agentWebhookResponse.ok ? null : `HTTP ${agentWebhookResponse.status}`,
-            } 
+              'delivery.agent_last_attempt_at': new Date().toISOString(),
+              'delivery.agent_webhook_id': agentWebhookId,
+            },
+            $inc: { 'delivery.agent_attempt_count': 1 }
           }
         );
       } catch (err) {
@@ -207,7 +216,10 @@ export async function POST(request) {
               'delivery.agent_webhook_sent': false,
               'delivery.agent_webhook_sent_at': new Date().toISOString(),
               'delivery.agent_webhook_error': err.message,
-            } 
+              'delivery.agent_last_attempt_at': new Date().toISOString(),
+              'delivery.agent_webhook_id': agentWebhookId,
+            },
+            $inc: { 'delivery.agent_attempt_count': 1 }
           }
         );
       }
