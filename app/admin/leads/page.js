@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ import {
   Clock,
 } from 'lucide-react';
 
-export default function AdminLeadsPage() {
+function AdminLeadsContent() {
   const searchParams = useSearchParams();
   const adminKey = searchParams.get('key');
   
