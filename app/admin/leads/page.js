@@ -270,20 +270,16 @@ function AdminLeadsContent() {
     return { status: 'not_sent', label: 'Not Sent', color: '#546E7A', bg: '#ECEFF1' };
   };
 
-  // Generate receipt URL for a lead
-  const generateReceiptUrl = (lead) => {
-    if (!lead.assigned_agent?.id) return null;
-    // We need to call the API to get the token, but for simplicity we'll construct it client-side
-    // Note: In production, this should be stored in the lead document or fetched from API
+  // Generate receipt URL for a lead (uses stored token)
+  const getReceiptUrl = (lead) => {
+    if (!lead.assigned_agent?.id || !lead.receipt_token) return null;
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-    return `${baseUrl}/agent/lead/${lead.id}`;
+    return `${baseUrl}/agent/lead/${lead.id}?token=${lead.receipt_token}`;
   };
 
   // Copy lead info to clipboard
   const copyLeadInfo = async (lead) => {
-    const receiptUrl = lead.assigned_agent?.id 
-      ? `${typeof window !== 'undefined' ? window.location.origin : ''}/agent/lead/${lead.id}?token=CONTACT_ADMIN_FOR_TOKEN`
-      : null;
+    const receiptUrl = getReceiptUrl(lead);
     
     const info = [
       `Name: ${lead.full_name}`,
@@ -298,7 +294,7 @@ function AdminLeadsContent() {
       '---',
       `Source: ${lead.source || 'medicare_cta'}`,
       lead.assigned_agent?.name ? `Assigned Agent: ${lead.assigned_agent.name}` : null,
-      receiptUrl ? `Receipt URL: ${receiptUrl}` : null,
+      receiptUrl ? `Agent Receipt URL: ${receiptUrl}` : null,
       lead.matched_programs?.length > 0 
         ? `Programs: ${lead.matched_programs.join(', ')}` 
         : null,
