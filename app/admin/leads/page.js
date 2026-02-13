@@ -135,10 +135,21 @@ function AdminLeadsContent() {
     }
   };
 
-  // Filter leads by priority
-  const filteredLeads = priorityFilter === 'all' 
-    ? leads 
-    : leads.filter(lead => lead.lead_priority === priorityFilter);
+  // Filter leads by priority and agent
+  const filteredLeads = leads.filter(lead => {
+    // Priority filter
+    if (priorityFilter !== 'all' && lead.lead_priority !== priorityFilter) {
+      return false;
+    }
+    // Agent filter
+    if (agentFilter === 'unassigned') {
+      return !lead.assigned_agent;
+    }
+    if (agentFilter !== 'all' && lead.assigned_agent?.id !== agentFilter) {
+      return false;
+    }
+    return true;
+  });
 
   // Count leads by priority
   const priorityCounts = {
