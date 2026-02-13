@@ -17,6 +17,11 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  Copy,
+  Download,
+  PhoneCall,
+  Trophy,
+  XCircle,
 } from 'lucide-react';
 
 function AdminLeadsContent() {
@@ -27,6 +32,8 @@ function AdminLeadsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   const fetchLeads = async () => {
     if (!adminKey) {
