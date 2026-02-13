@@ -713,17 +713,17 @@ function AdminLeadsContent() {
         {!loading && !error && filteredLeads.length > 0 && (
           <div className="space-y-4">
             {filteredLeads.map((lead) => {
-              const statusStyle = getStatusColor(lead.status);
+              const statusBadge = getStatusBadge(lead);
               const priorityStyle = getPriorityColor(lead.lead_priority);
               return (
                 <Card 
                   key={lead.id}
                   className="border-2 overflow-hidden"
                   style={{ 
-                    borderColor: lead.lead_priority === 'hot' ? '#FFCDD2' : '#E8DDCF', 
-                    backgroundColor: '#FFFFFF',
+                    borderColor: lead.status === 'on_hold_no_credits' ? '#FFE0B2' : (lead.lead_priority === 'hot' ? '#FFCDD2' : '#E8DDCF'), 
+                    backgroundColor: lead.status === 'on_hold_no_credits' ? '#FFFAF5' : '#FFFFFF',
                     borderLeftWidth: lead.lead_priority === 'hot' ? '4px' : '2px',
-                    borderLeftColor: lead.lead_priority === 'hot' ? '#C62828' : (lead.lead_priority === 'warm' ? '#E65100' : '#E8DDCF'),
+                    borderLeftColor: lead.status === 'on_hold_no_credits' ? '#E65100' : (lead.lead_priority === 'hot' ? '#C62828' : (lead.lead_priority === 'warm' ? '#E65100' : '#E8DDCF')),
                   }}
                 >
                   <CardContent className="p-0">
@@ -753,11 +753,12 @@ function AdminLeadsContent() {
                                 </span>
                               )}
                             </div>
+                            {/* Status Badge - uses new getStatusBadge */}
                             <span 
                               className="inline-block px-2 py-0.5 rounded text-xs font-medium"
-                              style={{ backgroundColor: statusStyle.bg, color: statusStyle.color }}
+                              style={{ backgroundColor: statusBadge.bg, color: statusBadge.color }}
                             >
-                              {lead.status?.toUpperCase() || 'NEW'}
+                              {statusBadge.label}
                             </span>
                           </div>
                         </div>
