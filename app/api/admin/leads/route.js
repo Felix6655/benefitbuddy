@@ -45,7 +45,7 @@ export async function GET(request) {
   }
 }
 
-// PATCH /api/admin/leads - Update lead status (admin only)
+// PATCH /api/admin/leads - Update lead status or retry delivery (admin only)
 export async function PATCH(request) {
   try {
     // Check admin key
@@ -60,7 +60,7 @@ export async function PATCH(request) {
     }
 
     const body = await request.json();
-    const { id, status } = body;
+    const { id, status, action } = body;
 
     // Validate required fields
     if (!id) {
@@ -70,6 +70,128 @@ export async function PATCH(request) {
       );
     }
 
+    // Get leads collection
+    const collection = await getCollection('leads');
+
+    // Handle retry delivery action
+    if (action === 'retry_delivery') {
+      // Get the lead first
+      const lead = await collection.findOne({ id: id });
+      if (!lead) {
+        return NextResponse.json({ error: 'Lead not found' }, { status: 404 });
+      }
+
+      // Check if already delivered successfully
+      if (lead.delivery?.sent_to_n8n === true) {
+        return NextResponse.json({ 
+          error: 'Lead already delivered successfully to n8n',
+          delivery: lead.delivery 
+        }, { status: 400 });
+      }
+
+      // Check if max attempts reached (3)
+      if ((lead.delivery?.attempt_count || 0) >= 3) {
+        // Reset for retry
+        await collection.updateOne(
+          { id: id },
+          { 
+            $set: { 
+              'delivery.attempt_count': 0,
+              'delivery.error': null,
+              'delivery.last_attempt_at': null,
+            } 
+          }
+        );
+      }
+
+      // Attempt delivery
+      const webhookUrl = process.env.N8N_LEADS_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
+      if (!webhookUrl) {
+        return NextResponse.json({ 
+          error: 'No webhook URL configured',
+          success: false 
+        }, { status: 400 });
+      }
+
+      const n8nWebhookId = `${lead.id}_n8n_retry_${Date.now()}`;
+      const event_name = lead.assigned_agent 
+        ? `medicare_lead_${lead.lead_priority}_assigned`
+        : `medicare_lead_${lead.lead_priority}`;
+
+      try {
+        const webhookResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'benefitbuddy_leads',
+            type: 'medicare_lead',
+            event_name: event_name,
+            lead_id: lead.id,
+            delivery_webhook_id: n8nWebhookId,
+            is_retry: true,
+            lead_priority: lead.lead_priority,
+            assigned_agent: lead.assigned_agent || null,
+            lead: {
+              id: lead.id,
+              full_name: lead.full_name,
+              phone: lead.phone_display || lead.phone,
+              zip_code: lead.zip_code,
+              state: lead.state,
+              turning_65_soon: lead.turning_65_soon,
+              has_medicare_now: lead.has_medicare_now,
+              wants_call_today: lead.wants_call_today,
+              lead_priority: lead.lead_priority,
+              source: lead.source,
+              page_url: lead.page_url,
+              matched_programs: lead.matched_programs,
+              status: lead.status,
+              created_at: lead.created_at,
+            },
+          }),
+        });
+
+        await collection.updateOne(
+          { id: id },
+          { 
+            $set: { 
+              'delivery.sent_to_n8n': webhookResponse.ok,
+              'delivery.sent_at': new Date().toISOString(),
+              'delivery.error': webhookResponse.ok ? null : `HTTP ${webhookResponse.status}`,
+              'delivery.last_attempt_at': new Date().toISOString(),
+              'delivery.n8n_webhook_id': n8nWebhookId,
+            },
+            $inc: { 'delivery.attempt_count': 1 }
+          }
+        );
+
+        return NextResponse.json({
+          success: webhookResponse.ok,
+          id: id,
+          message: webhookResponse.ok ? 'Delivery successful' : `Delivery failed: HTTP ${webhookResponse.status}`,
+        });
+
+      } catch (err) {
+        await collection.updateOne(
+          { id: id },
+          { 
+            $set: { 
+              'delivery.sent_to_n8n': false,
+              'delivery.error': err.message,
+              'delivery.last_attempt_at': new Date().toISOString(),
+            },
+            $inc: { 'delivery.attempt_count': 1 }
+          }
+        );
+
+        return NextResponse.json({
+          success: false,
+          id: id,
+          message: `Delivery failed: ${err.message}`,
+        });
+      }
+    }
+
+    // Handle status update
     if (!status || !VALID_STATUSES.includes(status)) {
       return NextResponse.json(
         { error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` },
@@ -77,9 +199,6 @@ export async function PATCH(request) {
       );
     }
 
-    // Get leads collection
-    const collection = await getCollection('leads');
-    
     // Update the lead status
     const result = await collection.updateOne(
       { id: id },
