@@ -37,6 +37,7 @@ function AdminLeadsContent() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [retryingId, setRetryingId] = useState(null);
+  const [sendingId, setSendingId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [agentFilter, setAgentFilter] = useState('all');
