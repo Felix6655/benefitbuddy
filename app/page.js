@@ -33,6 +33,330 @@ import {
   Loader2,
 } from 'lucide-react';
 
+// ============================================
+// MEDICARE LEAD CAPTURE MODAL (Homepage Version)
+// ============================================
+
+function HomepageLeadModal({ isOpen, onClose }) {
+  const [formData, setFormData] = useState({
+    full_name: '',
+    phone: '',
+    zip_code: '',
+    consent: false,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null);
+  const [errors, setErrors] = useState({});
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        full_name: '',
+        phone: '',
+        zip_code: '',
+        consent: false,
+      });
+      setSubmitResult(null);
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  // Format phone number as user types
+  const formatPhone = (value) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhone(e.target.value);
+    setFormData(prev => ({ ...prev, phone: formatted }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.full_name || formData.full_name.trim().length < 2) {
+      newErrors.full_name = 'Please enter your full name';
+    }
+    const phoneDigits = formData.phone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      newErrors.phone = 'Please enter a valid 10-digit phone number';
+    }
+    if (!formData.zip_code || !/^\d{5}(-\d{4})?$/.test(formData.zip_code)) {
+      newErrors.zip_code = 'Please enter a valid ZIP code';
+    }
+    if (!formData.consent) {
+      newErrors.consent = 'You must agree to be contacted';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          full_name: formData.full_name.trim(),
+          phone: formData.phone,
+          zip_code: formData.zip_code,
+          consent: formData.consent,
+          source: 'homepage_cta',
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitResult({ success: true, message: result.message });
+      } else {
+        setSubmitResult({ 
+          success: false, 
+          message: result.error || 'Something went wrong. Please try again.' 
+        });
+        if (result.details) {
+          const fieldErrors = {};
+          result.details.forEach(d => {
+            fieldErrors[d.field] = d.message;
+          });
+          setErrors(fieldErrors);
+        }
+      }
+    } catch (error) {
+      setSubmitResult({ 
+        success: false, 
+        message: 'Network error. Please check your connection and try again.' 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div 
+        className="relative w-full max-w-md rounded-xl shadow-2xl overflow-hidden"
+        style={{ backgroundColor: '#FFFFFF' }}
+      >
+        {/* Header */}
+        <div 
+          className="p-6 pb-4"
+          style={{ backgroundColor: '#FFF8F0', borderBottom: '1px solid #E8DDCF' }}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" style={{ color: '#6B625A' }} />
+          </button>
+          <div className="flex items-center gap-3 mb-2">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: '#D08C60' }}
+            >
+              <Phone className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold" style={{ color: '#3D3530' }}>
+                Get Free Medicare Help
+              </h2>
+              <p className="text-sm" style={{ color: '#6B625A' }}>
+                A licensed advisor will call you
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {submitResult?.success ? (
+            // Success state - Updated message
+            <div className="text-center py-4">
+              <div 
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+                style={{ backgroundColor: '#E8F5E9' }}
+              >
+                <CheckCircle className="w-8 h-8" style={{ color: '#4CAF50' }} />
+              </div>
+              <h3 className="text-xl font-bold mb-2" style={{ color: '#3D3530' }}>
+                Thank You!
+              </h3>
+              <p className="text-base mb-3" style={{ color: '#6B625A' }}>
+                A licensed Medicare advisor may call you in the next <strong>5–15 minutes</strong>.
+              </p>
+              <p className="text-base mb-6 p-3 rounded-lg" style={{ backgroundColor: '#FFF8F0', color: '#8B6914' }}>
+                <Phone className="w-4 h-4 inline-block mr-1" />
+                <strong>Please answer unknown numbers</strong> to get help faster.
+              </p>
+              <Button
+                onClick={onClose}
+                className="h-12 px-8 text-white"
+                style={{ backgroundColor: '#D08C60' }}
+              >
+                Close
+              </Button>
+            </div>
+          ) : (
+            // Form state
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {submitResult?.success === false && (
+                <div 
+                  className="p-3 rounded-lg text-sm"
+                  style={{ backgroundColor: '#FFEBEE', color: '#C62828' }}
+                >
+                  {submitResult.message}
+                </div>
+              )}
+
+              <div>
+                <Label 
+                  htmlFor="full_name" 
+                  className="text-base font-medium"
+                  style={{ color: '#3D3530' }}
+                >
+                  Full Name *
+                </Label>
+                <Input
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
+                  placeholder="John Smith"
+                  className="mt-1 h-12 text-base"
+                  style={{ borderColor: errors.full_name ? '#C62828' : '#E8DDCF' }}
+                  disabled={isSubmitting}
+                />
+                {errors.full_name && (
+                  <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.full_name}</p>
+                )}
+              </div>
+
+              <div>
+                <Label 
+                  htmlFor="phone" 
+                  className="text-base font-medium"
+                  style={{ color: '#3D3530' }}
+                >
+                  Phone Number *
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
+                  placeholder="(555) 123-4567"
+                  className="mt-1 h-12 text-base"
+                  style={{ borderColor: errors.phone ? '#C62828' : '#E8DDCF' }}
+                  disabled={isSubmitting}
+                  maxLength={14}
+                />
+                {errors.phone && (
+                  <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.phone}</p>
+                )}
+              </div>
+
+              <div>
+                <Label 
+                  htmlFor="zip_code" 
+                  className="text-base font-medium"
+                  style={{ color: '#3D3530' }}
+                >
+                  ZIP Code *
+                </Label>
+                <Input
+                  id="zip_code"
+                  value={formData.zip_code}
+                  onChange={(e) => setFormData(prev => ({ ...prev, zip_code: e.target.value.replace(/[^\d-]/g, '').slice(0, 10) }))}
+                  placeholder="12345"
+                  className="mt-1 h-12 text-base"
+                  style={{ borderColor: errors.zip_code ? '#C62828' : '#E8DDCF' }}
+                  disabled={isSubmitting}
+                  maxLength={10}
+                />
+                {errors.zip_code && (
+                  <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.zip_code}</p>
+                )}
+              </div>
+
+              <div className="flex items-start gap-3 pt-2">
+                <Checkbox
+                  id="consent"
+                  checked={formData.consent}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, consent: checked }))}
+                  className="mt-1"
+                  style={{ borderColor: errors.consent ? '#C62828' : '#D08C60' }}
+                  disabled={isSubmitting}
+                />
+                <Label 
+                  htmlFor="consent" 
+                  className="text-sm leading-relaxed cursor-pointer"
+                  style={{ color: '#6B625A' }}
+                >
+                  I agree to be contacted by a licensed Medicare advisor by phone. 
+                  I understand this is a free service with no obligation.
+                </Label>
+              </div>
+              {errors.consent && (
+                <p className="text-sm" style={{ color: '#C62828' }}>{errors.consent}</p>
+              )}
+
+              {/* Honeypot field - hidden from users */}
+              <input
+                type="text"
+                name="website"
+                style={{ display: 'none' }}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full h-14 text-lg text-white mt-4"
+                style={{ backgroundColor: '#D08C60' }}
+                onMouseOver={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#B76E45')}
+                onMouseOut={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#D08C60')}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="mr-2 w-5 h-5" />
+                    Request Free Callback
+                  </>
+                )}
+              </Button>
+
+              <p className="text-xs text-center pt-2" style={{ color: '#6B625A' }}>
+                🔒 Your information is secure and will only be used to connect you with a licensed advisor.
+              </p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Accessibility Controls Component
 function AccessibilityControls() {
   const [fontSize, setFontSize] = useState('normal');
