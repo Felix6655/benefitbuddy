@@ -233,6 +233,8 @@ export async function POST(request) {
         ? `medicare_lead_${lead_priority}_assigned`
         : `medicare_lead_${lead_priority}`;
       
+      const n8nWebhookId = `${lead.id}_n8n`;
+      
       try {
         const webhookResponse = await fetch(webhookUrl, {
           method: 'POST',
@@ -241,6 +243,9 @@ export async function POST(request) {
             source: 'benefitbuddy_leads',
             type: 'medicare_lead',
             event_name: event_name,
+            // Idempotency fields
+            lead_id: lead.id,
+            delivery_webhook_id: n8nWebhookId,
             lead_priority: lead_priority,
             assigned_agent: assigned_agent ? {
               id: assigned_agent.id,
@@ -277,7 +282,10 @@ export async function POST(request) {
               'delivery.sent_to_n8n': webhookResponse.ok,
               'delivery.sent_at': new Date().toISOString(),
               'delivery.error': webhookResponse.ok ? null : `HTTP ${webhookResponse.status}`,
-            } 
+              'delivery.last_attempt_at': new Date().toISOString(),
+              'delivery.n8n_webhook_id': n8nWebhookId,
+            },
+            $inc: { 'delivery.attempt_count': 1 }
           }
         );
       } catch (err) {
@@ -290,7 +298,10 @@ export async function POST(request) {
               'delivery.sent_to_n8n': false,
               'delivery.sent_at': new Date().toISOString(),
               'delivery.error': err.message,
-            } 
+              'delivery.last_attempt_at': new Date().toISOString(),
+              'delivery.n8n_webhook_id': n8nWebhookId,
+            },
+            $inc: { 'delivery.attempt_count': 1 }
           }
         );
       }
