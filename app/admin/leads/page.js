@@ -473,7 +473,7 @@ function AdminLeadsContent() {
         )}
 
         {/* Empty state */}
-        {!loading && !error && leads.length === 0 && (
+        {!loading && !error && filteredLeads.length === 0 && (
           <Card 
             className="border-2"
             style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
@@ -481,10 +481,13 @@ function AdminLeadsContent() {
             <CardContent className="p-8 text-center">
               <User className="w-16 h-16 mx-auto mb-4" style={{ color: '#E8DDCF' }} />
               <h2 className="text-xl font-bold mb-2" style={{ color: '#3D3530' }}>
-                No Leads Yet
+                {priorityFilter === 'all' ? 'No Leads Yet' : `No ${priorityFilter} Leads`}
               </h2>
               <p style={{ color: '#6B625A' }}>
-                Medicare leads will appear here when users submit the "Get Help Near Me" form.
+                {priorityFilter === 'all' 
+                  ? 'Medicare leads will appear here when users submit the "Get Help Near Me" form.'
+                  : `No leads with "${priorityFilter}" priority found. Try a different filter.`
+                }
               </p>
             </CardContent>
           </Card>
