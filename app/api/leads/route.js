@@ -76,6 +76,14 @@ export async function POST(request) {
     
     const validData = validation.data;
     
+    // Calculate lead priority
+    let lead_priority = 'cold';
+    if (validData.wants_call_today === true) {
+      lead_priority = 'hot';
+    } else if (validData.turning_65_soon === true || validData.has_medicare_now === true) {
+      lead_priority = 'warm';
+    }
+    
     // Create lead document
     const lead = {
       id: uuidv4(),
@@ -89,6 +97,14 @@ export async function POST(request) {
       turning_65_soon: validData.turning_65_soon,
       has_medicare_now: validData.has_medicare_now,
       wants_call_today: validData.wants_call_today,
+      // Lead priority
+      lead_priority: lead_priority,
+      // Delivery tracking
+      delivery: {
+        sent_to_n8n: false,
+        sent_at: null,
+        error: null,
+      },
       // Meta fields
       consent: validData.consent,
       consent_timestamp: new Date().toISOString(),
@@ -104,42 +120,76 @@ export async function POST(request) {
     const collection = await getCollection('leads');
     await collection.insertOne(lead);
     
-    // Forward to n8n webhook if configured (non-blocking)
+    // Forward to n8n webhook if configured
     const webhookUrl = process.env.N8N_LEADS_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL;
     if (webhookUrl) {
-      fetch(webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          source: 'benefitbuddy_leads',
-          type: 'medicare_lead',
-          lead: {
-            id: lead.id,
-            full_name: lead.full_name,
-            phone: lead.phone_display,
-            zip_code: lead.zip_code,
-            state: lead.state,
-            // Pre-qualifying answers
-            turning_65_soon: lead.turning_65_soon,
-            has_medicare_now: lead.has_medicare_now,
-            wants_call_today: lead.wants_call_today,
-            // Meta
-            source: lead.source,
-            page_url: lead.page_url,
-            matched_programs: lead.matched_programs,
-            status: lead.status,
-            created_at: lead.created_at,
-          },
-        }),
-      }).catch(err => {
+      // Determine event name based on priority
+      const event_name = `medicare_lead_${lead_priority}`;
+      
+      try {
+        const webhookResponse = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source: 'benefitbuddy_leads',
+            type: 'medicare_lead',
+            event_name: event_name,
+            lead_priority: lead_priority,
+            lead: {
+              id: lead.id,
+              full_name: lead.full_name,
+              phone: lead.phone_display,
+              zip_code: lead.zip_code,
+              state: lead.state,
+              // Pre-qualifying answers
+              turning_65_soon: lead.turning_65_soon,
+              has_medicare_now: lead.has_medicare_now,
+              wants_call_today: lead.wants_call_today,
+              lead_priority: lead_priority,
+              // Meta
+              source: lead.source,
+              page_url: lead.page_url,
+              matched_programs: lead.matched_programs,
+              status: lead.status,
+              created_at: lead.created_at,
+            },
+          }),
+        });
+
+        // Update delivery status
+        await collection.updateOne(
+          { id: lead.id },
+          { 
+            $set: { 
+              'delivery.sent_to_n8n': webhookResponse.ok,
+              'delivery.sent_at': new Date().toISOString(),
+              'delivery.error': webhookResponse.ok ? null : `HTTP ${webhookResponse.status}`,
+            } 
+          }
+        );
+      } catch (err) {
         console.error('n8n leads webhook error:', err.message);
-      });
+        // Update delivery status with error
+        await collection.updateOne(
+          { id: lead.id },
+          { 
+            $set: { 
+              'delivery.sent_to_n8n': false,
+              'delivery.sent_at': new Date().toISOString(),
+              'delivery.error': err.message,
+            } 
+          }
+        );
+      }
     }
     
     return NextResponse.json({
       success: true,
       id: lead.id,
-      message: 'Thank you! A licensed Medicare advisor will contact you within 1 business day.',
+      lead_priority: lead_priority,
+      message: lead_priority === 'hot' 
+        ? 'Thank you! A licensed Medicare advisor will call you very soon.'
+        : 'Thank you! A licensed Medicare advisor will contact you within 1 business day.',
     });
     
   } catch (error) {
