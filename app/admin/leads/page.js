@@ -34,6 +34,7 @@ function AdminLeadsContent() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   const fetchLeads = async () => {
     if (!adminKey) {
