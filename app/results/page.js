@@ -695,6 +695,7 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
           state: userState,
           matched_programs: matchedPrograms,
           source: 'medicare_cta',
+          page_url: typeof window !== 'undefined' ? window.location.href : null,
         }),
       });
 
