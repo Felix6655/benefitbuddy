@@ -23,6 +23,7 @@ const leadSchema = z.object({
   source: z.string().max(50).optional(),
   matched_programs: z.array(z.string()).optional(),
   state: z.string().max(50).optional(),
+  page_url: z.string().max(500).optional(),
 });
 
 // POST /api/leads - Create new Medicare advisor lead
