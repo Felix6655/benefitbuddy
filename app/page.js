@@ -93,6 +93,15 @@ function HomepageLeadModal({ isOpen, onClose }) {
     if (!formData.zip_code || !/^\d{5}(-\d{4})?$/.test(formData.zip_code)) {
       newErrors.zip_code = 'Please enter a valid ZIP code';
     }
+    if (formData.turning_65_soon === null) {
+      newErrors.turning_65_soon = 'Please answer this question';
+    }
+    if (formData.has_medicare_now === null) {
+      newErrors.has_medicare_now = 'Please answer this question';
+    }
+    if (formData.wants_call_today === null) {
+      newErrors.wants_call_today = 'Please answer this question';
+    }
     if (!formData.consent) {
       newErrors.consent = 'You must agree to be contacted';
     }
