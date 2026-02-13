@@ -109,6 +109,29 @@ function AdminLeadsContent() {
     }
   };
 
+  // Get priority badge color
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case 'hot': return { bg: '#FFEBEE', color: '#C62828', icon: '🔥' };
+      case 'warm': return { bg: '#FFF3E0', color: '#E65100', icon: '☀️' };
+      case 'cold': return { bg: '#E3F2FD', color: '#1565C0', icon: '❄️' };
+      default: return { bg: '#ECEFF1', color: '#546E7A', icon: '•' };
+    }
+  };
+
+  // Filter leads by priority
+  const filteredLeads = priorityFilter === 'all' 
+    ? leads 
+    : leads.filter(lead => lead.lead_priority === priorityFilter);
+
+  // Count leads by priority
+  const priorityCounts = {
+    all: leads.length,
+    hot: leads.filter(l => l.lead_priority === 'hot').length,
+    warm: leads.filter(l => l.lead_priority === 'warm').length,
+    cold: leads.filter(l => l.lead_priority === 'cold').length,
+  };
+
   // Update lead status
   const updateLeadStatus = async (leadId, newStatus) => {
     setUpdatingId(leadId);
