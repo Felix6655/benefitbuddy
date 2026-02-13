@@ -103,8 +103,118 @@ function AdminLeadsContent() {
       case 'new': return { bg: '#E3F2FD', color: '#1565C0' };
       case 'contacted': return { bg: '#E8F5E9', color: '#2E7D32' };
       case 'converted': return { bg: '#F3E5F5', color: '#7B1FA2' };
+      case 'lost': return { bg: '#FFEBEE', color: '#C62828' };
       default: return { bg: '#ECEFF1', color: '#546E7A' };
     }
+  };
+
+  // Update lead status
+  const updateLeadStatus = async (leadId, newStatus) => {
+    setUpdatingId(leadId);
+    try {
+      const response = await fetch(`/api/admin/leads?key=${encodeURIComponent(adminKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId, status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      // Update local state
+      setLeads(prevLeads => 
+        prevLeads.map(lead => 
+          lead.id === leadId 
+            ? { ...lead, status: newStatus, status_updated_at: new Date().toISOString() }
+            : lead
+        )
+      );
+    } catch (err) {
+      alert('Error updating lead status: ' + err.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  // Copy lead info to clipboard
+  const copyLeadInfo = async (lead) => {
+    const info = [
+      `Name: ${lead.full_name}`,
+      `Phone: ${formatPhone(lead.phone_display || lead.phone)}`,
+      `ZIP: ${lead.zip_code}`,
+      lead.state ? `State: ${lead.state}` : null,
+      `Source: ${lead.source || 'medicare_cta'}`,
+      lead.matched_programs?.length > 0 
+        ? `Programs: ${lead.matched_programs.join(', ')}` 
+        : null,
+      `Created: ${formatDate(lead.created_at)}`,
+    ].filter(Boolean).join('\n');
+
+    try {
+      await navigator.clipboard.writeText(info);
+      setCopiedId(lead.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = info;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopiedId(lead.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  // Export leads to CSV
+  const exportToCSV = () => {
+    if (leads.length === 0) {
+      alert('No leads to export');
+      return;
+    }
+
+    // CSV headers
+    const headers = ['created_at', 'source', 'full_name', 'phone', 'zip_code', 'state', 'matched_programs', 'status'];
+    
+    // Build CSV rows
+    const rows = leads.map(lead => [
+      lead.created_at || '',
+      lead.source || 'medicare_cta',
+      lead.full_name || '',
+      formatPhone(lead.phone_display || lead.phone),
+      lead.zip_code || '',
+      lead.state || '',
+      (lead.matched_programs || []).join('; '),
+      lead.status || 'new',
+    ]);
+
+    // Escape CSV values
+    const escapeCSV = (value) => {
+      const str = String(value);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+
+    // Build CSV content
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(escapeCSV).join(','))
+    ].join('\n');
+
+    // Download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `benefitbuddy_leads_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Unauthorized state
