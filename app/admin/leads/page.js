@@ -191,6 +191,85 @@ function AdminLeadsContent() {
     }
   };
 
+  // Retry delivery for a lead
+  const retryDelivery = async (leadId) => {
+    setRetryingId(leadId);
+    try {
+      const response = await fetch(`/api/admin/leads?key=${encodeURIComponent(adminKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leadId, action: 'retry_delivery' }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update local state
+        setLeads(prevLeads => 
+          prevLeads.map(lead => 
+            lead.id === leadId 
+              ? { 
+                  ...lead, 
+                  delivery: {
+                    ...lead.delivery,
+                    sent_to_n8n: true,
+                    sent_at: new Date().toISOString(),
+                    error: null,
+                    attempt_count: (lead.delivery?.attempt_count || 0) + 1,
+                    last_attempt_at: new Date().toISOString(),
+                  }
+                }
+              : lead
+          )
+        );
+        alert('Delivery successful!');
+      } else {
+        // Update local state with failure
+        setLeads(prevLeads => 
+          prevLeads.map(lead => 
+            lead.id === leadId 
+              ? { 
+                  ...lead, 
+                  delivery: {
+                    ...lead.delivery,
+                    attempt_count: (lead.delivery?.attempt_count || 0) + 1,
+                    last_attempt_at: new Date().toISOString(),
+                    error: data.message || 'Delivery failed',
+                  }
+                }
+              : lead
+          )
+        );
+        alert(data.message || data.error || 'Delivery failed');
+      }
+    } catch (err) {
+      alert('Error retrying delivery: ' + err.message);
+    } finally {
+      setRetryingId(null);
+    }
+  };
+
+  // Get delivery status display
+  const getDeliveryStatus = (lead) => {
+    const delivery = lead.delivery || {};
+    const attemptCount = delivery.attempt_count || 0;
+    const agentAttemptCount = delivery.agent_attempt_count || 0;
+    
+    if (delivery.sent_to_n8n === true) {
+      return { status: 'delivered', label: 'Delivered', color: '#2E7D32', bg: '#E8F5E9' };
+    }
+    if (attemptCount >= 3) {
+      return { status: 'max_attempts', label: `Failed (${attemptCount} attempts)`, color: '#C62828', bg: '#FFEBEE' };
+    }
+    if (delivery.error) {
+      return { status: 'failed', label: `Failed (${attemptCount}/3)`, color: '#E65100', bg: '#FFF3E0' };
+    }
+    if (attemptCount > 0) {
+      return { status: 'pending', label: `Pending (${attemptCount}/3)`, color: '#1565C0', bg: '#E3F2FD' };
+    }
+    return { status: 'not_sent', label: 'Not Sent', color: '#546E7A', bg: '#ECEFF1' };
+  };
+
   // Copy lead info to clipboard
   const copyLeadInfo = async (lead) => {
     const info = [
