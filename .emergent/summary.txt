@@ -1,182 +1,171 @@
 <analysis>
 <original_problem_statement>
-Build a production-ready full-stack web app called BenefitBuddy. The goal is a senior-friendly, step-by-step helper for US benefits programs. The app must be extremely easy for older adults to use (large fonts, big buttons, simple language).
+Build a production-ready full-stack web app called BenefitBuddy for senior-friendly access to US benefits programs.
 
-**PRODUCT REQUIREMENTS:**
-1.  **Frontend**:
-    *   Senior-friendly UI/UX: large fonts, high contrast, simple language.
-    *   Landing page () with a Start CTA.
-    *   A multi-step quiz/wizard at () to collect user information (location, household, income, needs) without requiring a login. Data should persist in .
-    *   A results page () that loads quiz data from  and displays matched benefit programs based on a simple rules engine.
-    .
-2.  **Backend**:
-    *   Use MongoDB with Mongoose as the default database.
-    *   API endpoints to handle submissions from the wizard ().
-    *   A simple admin panel () protected by an  to view, export (CSV), and delete submissions.
-3.  **Integrations**:
-    *   Forward submission data to an n8n webhook if  is set in the environment. This should be a non-blocking operation.
-4.  **SEO &amp; Trust**:
-    *   Full SEO implementation: , , metadata, Open Graph tags, JSON-LD.
-    *   Clear disclaimers about not being a government-affiliated site.
-5.  **Design System**:
-    *   A warm, paper theme with specific colors:
-        *   Background: 
-        *   Section surface: 
-        *   Card border: 
-        *   Primary button: 
-        *   Muted text: 
+**PRODUCT REQUIREMENTS (based on latest user requests):**
+
+1.  **Agent Management & Lead Routing**:
+    *   An admin panel to perform CRUD operations on Agents ().
+    *   Agents have profiles including name, contact info, and covered ZIP codes.
+    *   'HOT' leads should be automatically assigned to an active agent whose covered ZIP codes match the lead's ZIP code.
+    *   The admin leads dashboard () must have a filter to view leads by the assigned agent.
+
+2.  **Idempotent Lead Delivery & Retries**:
+    *   Prevent duplicate delivery of the same lead to webhooks (both n8n and agent-specific).
+    *   Track delivery attempts and status in the database.
+    *   Stop retrying after a certain number of failures (e.g., 3).
+    *   The admin panel should show the delivery status (Delivered, Failed) and provide a button to manually Retry a failed delivery.
+
+3.  **Secure Agent Lead Viewing**:
+    *   When a lead is delivered to an agent, a secure, unique URL should be generated.
+    *   This URL, protected by a signed token (e.g., HMAC), should lead to a page () where the agent can view the specific lead's details without needing to log in to the main admin panel.
+    *   This URL should be included in the agent webhook payload and be available to copy from the admin dashboard.
+
+4.  **Agent Credit System**:
+    *   Agents have a credit balance.
+    *   The admin panel should allow an administrator to view and manage (add/set) an agent's credits.
+    *   When a 'HOT' lead is assigned to an agent, the system must check if the agent has credits ().
+    *   If the agent has no credits, the lead is put On Hold, and delivery is paused.
+    *   If the agent has credits, the lead is delivered, and one credit is deducted upon successful delivery.
+    *   The admin leads dashboard should show On Hold leads and provide a Send Now button for an admin to manually trigger delivery (which will then check for and consume a credit).
 </original_problem_statement>
 
 **User's preferred language**: English
 
 **what currently exists?**
-The project is a Next.js 14 application named BenefitBuddy. The backend is connected to MongoDB. The application has a consistent, senior-friendly warm paper theme.
+The application is a full-stack Next.js 14 app with a MongoDB backend. It has evolved from a simple benefits quiz into a sophisticated Medicare lead generation and management platform.
 
-The following pages and features are implemented:
--   **Landing Page ()**: A functional landing page with a hero section, How it Works, and FAQ sections.
--   **Quiz Wizard ()**: A 5-step wizard that collects user data (location, household, income, situation, needs) and saves the progress to  under the key .
--   **Admin Panel ()**: A basic admin interface protected by an  to view submissions.
--   **API Routes**: Backend endpoints exist to create and retrieve submissions.
--   **Results Page ()**: A file exists at , but it's not correctly implemented. It currently shows an empty state message (Go back to quiz) and does not perform the required data loading from  or benefit matching.
+- **Core Lead System**: Captures Medicare leads via modals, prioritizes them ('hot', 'warm', 'cold'), and saves them to a MongoDB collection.
+- **Agent Routing**: 'HOT' leads are automatically assigned to agents based on ZIP code matches.
+- **Admin Panel**: A comprehensive admin section is available, protected by an .
+    - : A full CRUD interface to manage agents, their covered ZIP codes, and their prepaid credit balance.
+    - : An advanced dashboard to view and manage leads. It features filtering (by priority, agent), status updates, CSV export, and copy-to-clipboard functionality.
+- **Delivery System**: Lead delivery to webhooks is now idempotent, with database tracking for delivery status, attempt counts, and errors. The admin panel displays this status and allows for manual retries.
+- **Agent Credit System**: A prepaid credit system is fully implemented. Leads are held if an agent has no credits, and credits are deducted upon successful lead delivery. Admins can manage credits and manually push 'on hold' leads.
+- **Secure Agent Portal**: A token-based system provides agents with a secure, unique URL to view the details of each lead assigned to them without needing full admin access.
 
 **Last working item**:
--   **Last item agent was working**: The agent was repeatedly tasked with building the  page according to a detailed specification from the user. The agent created the file but failed to implement the full logic for loading data from , matching benefits, and displaying the results. The user had to re-issue the same prompt multiple times.
--   **Status**: IN PROGRESS
--   **Agent Testing Done**: N (The agent only took a screenshot of the empty state, but did not perform an end-to-end test by completing the quiz first).
--   **Which testing method agent to use?**: Frontend testing agent. The agent MUST perform a full end-to-end test: 1. Navigate to . 2. Complete all 5 steps of the quiz. 3. Submit the quiz. 4. Verify that the  page correctly loads the data from  and displays the Likely Matches and Also Check program cards based on the matching rules.
--   **User Testing Done**: N
+    - Last item agent was working: The agent just finished implementing a prepaid lead credit system for agents. This involved modifying the agent schema, updating the admin agents page to manage credits, updating the lead intake API to check for credits before delivery, and updating the admin leads page to show leads On Hold and provide a Send Now override.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: N (The agent confirmed the build passed but did not perform visual/functional testing of the new credit features.)
+    - Which testing method agent to use? both.
+        - **Backend**: Create a test script or use  to verify the  logic:
+            1. Create an agent with 0 credits.
+            2. Submit a 'HOT' lead for that agent's ZIP.
+            3. Verify the lead in the DB has .
+            4. Use the  endpoint to add credits to the agent.
+            5. Use the  endpoint with .
+            6. Verify the lead status is updated to new and the agent's credit count has been decremented.
+        - **Frontend**: Use the  to navigate to  and  (with the ) to visually confirm that the new credit management UI and the On Hold status/badges are displayed correctly.
+    - User Testing Done: N
 
 **All Pending/In progress Issue list**:
--   **Issue 1**: The  page is not functional. (Priority: P0)
-
-**Issues Detail**:
--   **Issue 1**: Results page does not load data or show matched benefits.
-    -   **Attempted fixes**: The agent has overwritten the  file multiple times. However, each attempt seems to have missed the core logic of reading from  and applying the matching rules. The last verification only showed the empty state, indicating the  data is not being processed.
-    -   **Next debug checklist**:
-        1.  Delete the existing content of .
-        2.  Re-implement the page from scratch, strictly following the user's last detailed prompt (Chat Message 149).
-        3.  Ensure the component is a client component () to access .
-        4.  In a  hook, read the  key from .
-        5.  If data is missing, render the Go back to quiz message.
-        6.  If data exists, implement the matching logic (Likely Matches, Also Check) exactly as specified.
-        7.  Render the program cards for each matched benefit.
-        8.  Perform the end-to-end test described in the Last working item section to verify.
-    -   **Why fix this issue and what will be achieved with the fix?**: This is the final critical step to make the core user flow functional. It connects the quiz to the results, delivering the main value proposition of the app.
-    -   **Status**: IN PROGRESS
-    -   **Is recurring issue?**: Y
-    -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on other issue**: None
+- There are no pending issues. All user requests have been implemented sequentially. The last completed feature is pending user verification.
 
 **In progress Task List**:
--   **Task 1**: Implement the  page logic. (Priority: P0)
-
-**Task Detail**:
--   **Task 1**:
-    -   **Where to resume**: Resume by editing the file .
-    -   **What will be achieved with this?**: A functional results page that shows users the benefits they may qualify for based on their quiz answers, completing the core MVP flow.
-    -   **Status**: IN PROGRESS
-    -   **Should Test frontend/backend/both after fix?**: frontend
-    -   **Blocked on something**: None.
+- There are no tasks currently in progress.
 
 **Upcoming and Future Tasks**
--   **Upcoming Tasks**:
-    -   **(P1) Wire-up Landing Page CTAs**: Connect all Get Started buttons and How It Works card links on the landing page to navigate to .
-    -   **(P1) Implement SEO Artifacts**: Create  and . Add dynamic metadata and Open Graph tags to all pages (, , ).
--   **Future Tasks**:
-    -   **(P2) Activate n8n Webhook**: The backend is ready, but it requires the  environment variable to be set and tested.
-    -   **(P3) Email/Text my results feature**: This would likely involve the n8n integration for sending notifications.
+- There are no outstanding user requests. Based on the project's evolution, potential future tasks could include:
+    - **(P1) Notifications**: Add email or SMS notifications to admins or agents for specific events (e.g., agent running low on credits, a lead has been on hold for more than 24 hours).
+    - **(P2) Billing/Invoicing**: Add a simple page to track credit additions for billing purposes ( or similar).
+    - **(P2) UI/UX Refinements**: Further refine the admin dashboards based on user feedback.
 
 **Completed work in this session**
--   Initial app scaffolding with Next.js and MongoDB.
--   Implementation and refinement of a warm paper senior-friendly design theme.
--   **Landing Page**: Created at .
--   **Quiz Wizard**: Created a 5-step wizard at  that saves data to .
--   **Admin Panel**: Created a basic admin page at .
--   **API Routes**: Implemented backend routes for submissions.
--   **Layout Fixes**: Corrected a layout regression where a dark background was showing.
+- List of all completed tasks with file and method name:
+    - **Agent Filtering**: Completed the Filter by Agent dropdown on the  page.
+        - Modified: 
+    - **Idempotent Delivery**: Implemented a robust webhook delivery system with idempotency keys, attempt tracking, and a retry mechanism.
+        - Modified: , , 
+    - **Secure Agent Receipt Page**: Created a secure, token-based page for agents to view assigned leads.
+        - Created: , , 
+        - Modified: , 
+    - **Agent Credit System**: Implemented a prepaid credit system for agents, including holding leads if credits are insufficient.
+        - Modified:  (implicitly, via API), , , , , 
+
+- Recently completed:
+  - Agent filtering on leads dashboard (DONE)
+  - Idempotent webhook delivery with retries (DONE)
+  - Secure token-based agent lead view pages (DONE)
+  - Agent prepaid credit and lead-holding system (DONE, PENDING USER VERIFICATION)
 
 **Earlier issues found/mentioned but not fixed**
--   The primary and only major issue is the repeated failure to correctly implement the  page logic, as detailed in the All Pending/In progress Issue list.
+   - None.
 
 **Known issue recurrence from previous fork**
--   N/A
+  - None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Framework**: Next.js 14 (App Router)
--   **Styling**: Tailwind CSS with a custom warm paper theme using CSS variables.
--   **Database**: MongoDB with Mongoose ORM.
--   **Frontend State**: Client-side state management using React hooks (, ) and  for persisting quiz data across sessions.
--   **Backend**: Next.js API Routes.
+-   **Styling**: Tailwind CSS, shadcn/ui
+-   **Database**: MongoDB
+-   **Authentication**: Admin access via URL query parameter (). Agent access via signed HMAC tokens.
+-   **Key Patterns**:
+    -   Idempotent API design using unique webhook IDs.
+    -   State machine for lead status (, , , etc.).
+    -   Credit-based feature gating for lead delivery.
+    -   Separation of concerns (e.g., ).
 
 **key DB schema**
--   **submissions** (Mongoose Model in ):
-    -   
+-   **benefitbuddy_leads**: 
+-   **benefitbuddy_agents**: 
 
 **changes in tech stack**
--   The project was started with a decision to use MongoDB as the primary database, deferring a potential Postgres implementation.
+-   No changes to the core tech stack.  module from Node.js is now used for HMAC token generation.
 
 **All files of reference**
--   : **NEEDS FIXING**. This is the highest priority file.
--   : The quiz wizard that populates .
--   : The main landing page.
--   : The root layout, contains global styling and structure.
--   : Defines the core CSS variables for the warm theme.
--   : Extends Tailwind with the custom theme colors.
--   : The backend endpoint that the original wizard submits to.
+-   : **UPDATED**. UI for viewing leads, now includes agent filtering, delivery status, and Send Now button for held leads. This file is very large and complex.
+-   : **UPDATED**. UI for managing agents, now includes controls for managing agent credits.
+-   : **UPDATED**. Core lead intake logic. Heavily modified to include agent assignment, credit checking, and token generation.
+-   : **UPDATED**. Admin API for leads. Now handles status updates, manual delivery retries, and the send_now action for credit-held leads.
+-   : **UPDATED**. Admin API for agents. Now handles credit updates.
+-   : **NEW**. Frontend page for the secure agent lead view.
 
 **Areas that need refactoring**:
--   The  file has been overwritten multiple times and is in a broken state. It should be re-written carefully from the user's latest prompt.
+-   The lead capture modal logic is duplicated across  and . This should be extracted into a reusable component.
+-   The  file has grown significantly and is responsible for fetching data, managing multiple states (filters, loading, errors, modals), and rendering a complex list. It should be broken down into smaller, more manageable components (e.g., , , ).
+-   The  function in  handles multiple distinct actions (, , ). This could be refactored for clarity, potentially by using a switch statement on an  property in the request body or by creating more specific endpoints.
 
 **key api endpoints**
--   : Creates a new user submission.
--   : Retrieves submission data for the public results page.
--   : (Protected) Retrieves all submissions for the admin panel.
--   : (Protected) Deletes a submission.
--   : (Protected) Exports submissions as a CSV file.
+-   : Creates a new lead, performs assignment, and checks credits.
+-   : Updates a lead's status OR retries delivery OR sends a credit-held lead.
+-   : Updates an agent, including their credit balance.
+-   : Validates a token and returns lead data for the secure agent page.
 
 **Critical Info for New Agent**
--   You are in a loop regarding the  page. The user has provided the same detailed prompt multiple times (e.g., Chat Message 149). The previous agent believed the task was complete, but it was not.
--   Your **HIGHEST PRIORITY** is to implement the  page **EXACTLY** as specified in the user's prompt.
--   You **MUST** perform a full end-to-end test to verify the fix: 1. Fill out the quiz at . 2. Submit it. 3. Confirm the  page correctly displays the matched programs based on your quiz answers. Do not assume it works without this test.
+-   The application is stable and all recent feature requests have been fully implemented. Your immediate task will likely be to verify the latest Agent Credit System feature and then await the next request from the user.
+-   Familiarize yourself with the agent credit workflow: a 'HOT' lead for an agent with 0 credits will be created with  and will not be delivered to the agent's webhook until an admin either adds credits and the lead is retried, or an admin clicks Send Now.
+-   The admin panel is the heart of the application's new functionality. You will need the  from the  file to access any  pages.
+-   The frontend admin pages (, ) are becoming very large. Be mindful of this when adding new features and consider refactoring into smaller components if possible.
 
 **documents created in this job**
--   
--   
+-   None.
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (Msg 152)**: Provided a summary of completed and remaining work, re-emphasizing the need to build the  page. **Status: Pending.**
-2.  **User (Msg 150)**: Acknowledged the  page is built and asked for screenshots and a test checklist. This was likely based on the agent's incorrect assertion of completion. **Status: Superseded.**
-3.  **User (Msg 149)**: Provided another highly detailed set of requirements for the  page. **Status: Pending - THIS IS THE SOURCE OF TRUTH for the next task.**
-4.  **User (Msg 147)**: Acknowledged the agent's claim that the results page was built and asked to verify it. **Status: Superseded.**
-5.  **User (Msg 146)**: Re-issued the full, detailed prompt for building the  page. **Status: Superseded by Msg 149.**
-6.  **User (Msg 144)**: Re-issued a detailed prompt to rebuild the results page. **Status: Superseded.**
-7.  **User (Msg 143)**: Re-issued the full, detailed prompt for building the  page. **Status: Superseded.**
-8.  **User (Msg 142)**: Agent action (screenshot) showed the  page with an empty state (No quiz data). **Status: Completed (Action).**
-9.  **User (Msg 141)**: Agent stated the results page was already built and it would test the flow. **Status: Completed (Agent thought).**
-10. **User (Msg 140)**: Re-issued the detailed prompt for building the  page. **Status: Superseded.**
+1.  **User Request (Msg 98)**: Add a prepaid lead credit system for agents. Hold leads if an agent has no credits. **Status: Completed, pending user verification**.
+2.  **User Request (Msg 66)**: Create a secure, token-based receipt page for agents to view assigned leads. **Status: Completed**.
+3.  **User Request (Msg 36)**: Implement idempotent webhook delivery with delivery tracking and a manual retry button for admins. **Status: Completed**.
+4.  **User Request (Msg 30)**: A structured requirement list for the agent assignment and filtering system. **Status: Completed**.
+5.  **Agent Question (Msg 29)**: Asked the user for the next steps after completing the agent filter feature. This led to the subsequent feature requests. **Status: Addressed**.
 
 **Project Health Check:**
--   **Broken**: The core user flow is broken because the  page is not implemented correctly. The quiz at  does not lead to a functional results display.
+- **Working**: All core features, including the latest credit system, are implemented and the application builds successfully. No known broken functionality.
 
 **3rd Party Integrations**
--   **n8n**: Planned for webhook integration. Requires a user-provided  API key. Backend logic is present but inactive without the key.
+-   **n8n**: Configured for two separate webhooks. Requires user-provided keys (, ). The system also supports agent-specific webhook URLs stored in the database.
 
 **Testing status**
--   **Testing agent used after significant changes**: NO
--   **Troubleshoot agent used after agent stuck in loop**: NO
--   **Test files created**: None.
--   **Known regressions**: A dark theme background issue was introduced and then fixed during the warm theme implementation.
+  - Testing agent used after significant changes: NO
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: []
+  - Known regressions: None identified.
 
 **Credentials to test flow:**
--   **Admin Panel**: Access . The key is defined in .
+-   **Admin Panel**: Access by appending  to the URL (e.g., ). The  can be found in the  file (default: ).
 
 **What agent forgot to execute**
--   The agent repeatedly failed to correctly and completely implement the  page according to the user's detailed instructions.
--   The agent did not perform an end-to-end test of the quiz-to-results flow.
--   The agent did not wire up the Call-to-Action (CTA) buttons on the landing page to .
--   The agent has not implemented the required SEO features (, , metadata).
-
+-   The agent did not forget to execute any requested tasks. All user requests were implemented in the order they were received.
 </analysis>
