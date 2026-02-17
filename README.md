@@ -129,6 +129,92 @@ Note: PII (name, email, phone) is NOT sent to webhook by default for privacy.
 
 MIT
 
+## Twilio Voice Integration (Phone Leads)
+
+BenefitBuddy includes a Twilio-powered voice webhook that captures phone leads via IVR.
+
+### Setup
+
+1. **Get Twilio Credentials**:
+   - Create account at [twilio.com](https://twilio.com)
+   - Get your Account SID and Auth Token from the [Twilio Console](https://console.twilio.com)
+   - Purchase a phone number with Voice capability
+
+2. **Add Environment Variables** (Vercel/.env.local):
+   ```env
+   TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   TWILIO_PHONE_NUMBER=+1XXXXXXXXXX
+   ADMIN_ALERT_PHONE=+1XXXXXXXXXX
+   ```
+
+3. **Configure Twilio Webhook**:
+   - Go to [Twilio Console](https://console.twilio.com) → Phone Numbers → Manage → Active Numbers
+   - Select your phone number
+   - Under "Voice & Fax" → "A call comes in":
+     - Webhook URL: `https://YOUR_DOMAIN.com/api/voice/inbound`
+     - HTTP Method: `POST`
+   - Save
+
+### Voice IVR Flow
+
+When someone calls your Twilio number:
+
+1. **Greeting** → Asks for 5-digit ZIP code (speech or keypad)
+2. **Service Selection** → Press 1 for Plumbing, 2 for Funding, 3 for Car Help
+3. **Callback Number** → Captures 10-digit phone number
+4. **Confirmation** → Thanks caller and hangs up
+
+**For HOT Leads** (caller says "urgent", "emergency", etc.):
+- Automatically transfers call to `ADMIN_ALERT_PHONE`
+- Sends SMS alert before transfer
+
+### Data Stored
+
+Phone leads are saved to MongoDB collection `phone_leads`:
+
+| Field | Description |
+|-------|-------------|
+| `call_sid` | Twilio Call SID |
+| `phone` | Caller's phone number |
+| `zip_code` | 5-digit ZIP code |
+| `service_type` | plumbing / funding / car_help / general |
+| `callback_number` | Callback phone number |
+| `is_hot` | Boolean - urgent lead flag |
+| `call_timestamp` | When call was received |
+| `sms_alert_sent` | Admin SMS notification status |
+| `transferred` | Whether call was transferred |
+
+### SMS Alerts
+
+After each completed call, admin receives SMS to `ADMIN_ALERT_PHONE`:
+
+```
+🔔 NEW PHONE LEAD!
+
+📞 Phone: +1234567890
+📍 ZIP: 90210
+🔧 Service: Plumbing
+📱 Callback: 5551234567
+🔥 HOT LEAD - URGENT!
+⏰ 6/15/2025, 2:30:00 PM
+```
+
+### Testing
+
+Test the webhook endpoint:
+```bash
+curl https://YOUR_DOMAIN.com/api/voice/inbound
+```
+
+Should return TwiML:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Say voice="Polly.Joanna" language="en-US">This is the Benefit Buddy voice webhook. It is working correctly.</Say>
+</Response>
+```
+
 ## Support
 
 For issues or questions, please open a GitHub issue.
