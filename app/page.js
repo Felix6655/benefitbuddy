@@ -680,6 +680,11 @@ function Footer() {
                   Terms of Service
                 </Link>
               </li>
+              <li>
+                <Link href="/contact" className="senior-text hover:underline" style={{ color: '#D08C60' }}>
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
