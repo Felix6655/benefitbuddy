@@ -92,38 +92,78 @@ export const metadata = {
   },
 };
 
-// JSON-LD structured data
+// JSON-LD structured data for SEO
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'WebSite',
-      '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://benefitbuddy.vercel.app'}/#website`,
-      'url': process.env.NEXT_PUBLIC_SITE_URL || 'https://benefitbuddy.vercel.app',
+      '@id': `${siteUrl}/#website`,
+      'url': siteUrl,
       'name': 'BenefitBuddy',
-      'description': 'Find government benefits you may qualify for',
+      'description': 'Free Medicare help and government benefits eligibility tool',
+      'publisher': {
+        '@id': `${siteUrl}/#organization`,
+      },
       'potentialAction': {
         '@type': 'SearchAction',
-        'target': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://benefitbuddy.vercel.app'}/start`,
+        'target': {
+          '@type': 'EntryPoint',
+          'urlTemplate': `${siteUrl}/start`,
+        },
         'query-input': 'required name=search_term_string',
       },
+      'inLanguage': 'en-US',
     },
     {
       '@type': 'Organization',
-      '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'https://benefitbuddy.vercel.app'}/#organization`,
+      '@id': `${siteUrl}/#organization`,
       'name': 'BenefitBuddy',
-      'url': process.env.NEXT_PUBLIC_SITE_URL || 'https://benefitbuddy.vercel.app',
-      'description': 'A free tool to help people find government assistance programs they may be eligible for.',
+      'url': siteUrl,
+      'logo': {
+        '@type': 'ImageObject',
+        'url': `${siteUrl}/og-image.png`,
+        'width': 1200,
+        'height': 630,
+      },
+      'description': 'BenefitBuddy helps people find Medicare plans and government assistance programs they may be eligible for. Free service with licensed Medicare advisors.',
+      'sameAs': [],
+      'contactPoint': {
+        '@type': 'ContactPoint',
+        'contactType': 'customer service',
+        'availableLanguage': ['English'],
+      },
+    },
+    {
+      '@type': 'Service',
+      '@id': `${siteUrl}/#service`,
+      'name': 'Free Medicare & Benefits Consultation',
+      'provider': {
+        '@id': `${siteUrl}/#organization`,
+      },
+      'description': 'Connect with licensed Medicare advisors for free. Check eligibility for Medicare, Medicaid, SNAP, and other government assistance programs.',
+      'serviceType': 'Insurance Consultation',
+      'areaServed': {
+        '@type': 'Country',
+        'name': 'United States',
+      },
+      'offers': {
+        '@type': 'Offer',
+        'price': '0',
+        'priceCurrency': 'USD',
+        'description': 'Free consultation with licensed Medicare advisors',
+      },
     },
     {
       '@type': 'FAQPage',
+      '@id': `${siteUrl}/#faq`,
       'mainEntity': [
         {
           '@type': 'Question',
           'name': 'What is BenefitBuddy?',
           'acceptedAnswer': {
             '@type': 'Answer',
-            'text': 'BenefitBuddy is a free tool that helps you find government assistance programs you may be eligible for, including SNAP, Medicaid, housing assistance, and more.',
+            'text': 'BenefitBuddy is a free tool that helps you find government assistance programs and Medicare plans you may be eligible for. We connect you with licensed Medicare advisors at no cost.',
           },
         },
         {
@@ -131,7 +171,7 @@ const jsonLd = {
           'name': 'Is BenefitBuddy a government website?',
           'acceptedAnswer': {
             '@type': 'Answer',
-            'text': 'No, BenefitBuddy is not affiliated with any government agency. We provide information and guidance to help you understand what benefits you may qualify for, but you must apply through official government channels.',
+            'text': 'No, BenefitBuddy is not affiliated with any government agency. We provide information and connect you with licensed advisors to help you understand what benefits you may qualify for, but you must apply through official government channels.',
           },
         },
         {
@@ -139,8 +179,36 @@ const jsonLd = {
           'name': 'Is my information secure?',
           'acceptedAnswer': {
             '@type': 'Answer',
-            'text': 'We collect minimal personal information and never share or sell your data. Most fields are optional, and we only use your information to show you relevant benefit recommendations.',
+            'text': 'Yes, we collect minimal personal information and never sell or share your data. Your information is only used to connect you with licensed Medicare advisors and show you relevant benefit recommendations.',
           },
+        },
+        {
+          '@type': 'Question',
+          'name': 'Does this service cost anything?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'No! BenefitBuddy is completely free to use. Speaking with a licensed Medicare advisor through our service is also free with no obligation.',
+          },
+        },
+        {
+          '@type': 'Question',
+          'name': 'What programs can BenefitBuddy help me find?',
+          'acceptedAnswer': {
+            '@type': 'Answer',
+            'text': 'BenefitBuddy can help you check eligibility for Medicare, Medicaid, SNAP (food stamps), housing assistance, energy assistance (LIHEAP), VA benefits, CHIP, WIC, SSI, and Medicare Savings Programs.',
+          },
+        },
+      ],
+    },
+    {
+      '@type': 'BreadcrumbList',
+      '@id': `${siteUrl}/#breadcrumb`,
+      'itemListElement': [
+        {
+          '@type': 'ListItem',
+          'position': 1,
+          'name': 'Home',
+          'item': siteUrl,
         },
       ],
     },
