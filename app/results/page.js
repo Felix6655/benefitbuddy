@@ -24,8 +24,8 @@ import {
   Phone,
   X,
   UserCheck,
+  RefreshCw,
 } from 'lucide-react';
-import { getSnapStateApplyUrl, getMedicaidHelpUrl, OFFICIAL_PROGRAM_URLS, getStateNameFromAbbr } from '@/lib/stateLinks';
 
 const STORAGE_KEY = 'benefitbuddy_quiz';
 
@@ -37,165 +37,127 @@ const PROGRAMS = {
     id: 'snap',
     name: 'SNAP (Food Assistance)',
     icon: '🛒',
-    description: 'The Supplemental Nutrition Assistance Program provides monthly benefits to help low-income households buy groceries.',
+    description: 'Monthly benefits to help low-income households buy groceries.',
     officialLink: 'https://www.fns.usda.gov/snap/state-directory',
   },
   medicaid: {
     id: 'medicaid',
     name: 'Medicaid',
     icon: '🏥',
-    description: 'Medicaid offers free or low-cost health coverage for eligible low-income adults, children, and families.',
+    description: 'Free or low-cost health coverage for eligible low-income adults, children, and families.',
     officialLink: 'https://www.medicaid.gov/about-us/beneficiary-resources/index.html',
   },
   medicare_savings: {
     id: 'medicare_savings',
     name: 'Medicare Savings Programs',
     icon: '💊',
-    description: 'These programs help seniors with limited income pay Medicare premiums, deductibles, and copays.',
+    description: 'Help seniors with limited income pay Medicare premiums, deductibles, and copays.',
     officialLink: 'https://www.medicare.gov/medicare-savings-programs',
   },
   housing: {
     id: 'housing',
     name: 'Housing Assistance (HUD)',
     icon: '🏠',
-    description: 'HUD offers rental assistance programs including Section 8 vouchers and public housing options.',
+    description: 'Rental assistance programs including Section 8 vouchers and public housing.',
     officialLink: 'https://www.hud.gov/topics/rental_assistance',
   },
   liheap: {
     id: 'liheap',
     name: 'Energy Assistance (LIHEAP)',
     icon: '💡',
-    description: 'LIHEAP helps low-income households pay for heating and cooling their homes.',
+    description: 'Help low-income households pay for heating and cooling their homes.',
     officialLink: 'https://www.acf.hhs.gov/ocs/low-income-home-energy-assistance-program-liheap',
   },
   va_benefits: {
     id: 'va_benefits',
     name: 'VA Benefits',
     icon: '🎖️',
-    description: 'Veterans may qualify for healthcare, disability compensation, pension, education benefits, and more.',
+    description: 'Healthcare, disability compensation, pension, and education benefits for veterans.',
     officialLink: 'https://www.va.gov/',
   },
   chip: {
     id: 'chip',
     name: 'CHIP (Children\'s Health Insurance)',
     icon: '👶',
-    description: 'CHIP provides low-cost health coverage for children in families who earn too much for Medicaid but cannot afford private insurance.',
-    officialLink: 'https://www.medicaid.gov/about-us/beneficiary-resources/index.html',
-  },
-  ssi: {
-    id: 'ssi',
-    name: 'SSI (Supplemental Security Income)',
-    icon: '🤝',
-    description: 'SSI provides monthly cash payments to people with limited income and resources who are 65+, blind, or disabled.',
-    officialLink: 'https://www.ssa.gov/ssi/',
+    description: 'Low-cost health coverage for children in families who earn too much for Medicaid.',
+    officialLink: 'https://www.medicaid.gov/chip/index.html',
   },
   wic: {
     id: 'wic',
     name: 'WIC (Women, Infants & Children)',
     icon: '🍼',
-    description: 'WIC provides nutritious foods, nutrition education, breastfeeding support, and health referrals for pregnant women and young children.',
+    description: 'Nutritious foods and nutrition education for pregnant women and young children.',
     officialLink: 'https://www.fns.usda.gov/wic',
+  },
+  ssi: {
+    id: 'ssi',
+    name: 'SSI (Supplemental Security Income)',
+    icon: '🤝',
+    description: 'Monthly cash payments for people with limited income who are 65+, blind, or disabled.',
+    officialLink: 'https://www.ssa.gov/ssi/',
   },
 };
 
 // ============================================
-// DATA NORMALIZATION HELPERS
+// CONFIDENCE LEVELS
 // ============================================
+const CONFIDENCE = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
 
-/**
- * Normalize the quiz data to handle variations in field names and values
- */
+// ============================================
+// DATA HELPERS
+// ============================================
 function normalizeQuizData(raw) {
-  if (!raw || typeof raw !== 'object') {
-    return null;
-  }
+  if (!raw || typeof raw !== 'object') return null;
 
-  // Helper to check if value indicates "under 18"
-  const isUnder18 = (val) => {
-    if (!val) return false;
-    const v = String(val).toLowerCase().replace(/[^a-z0-9]/g, '');
-    // Match: under_18, under18, under 18
-    return v.includes('under');
-  };
-
-  // Helper to check if value indicates "65+"
-  const is65Plus = (val) => {
-    if (!val) return false;
-    const v = String(val).toLowerCase();
-    // Match: 65_plus, 65plus, 65+, 65 or older
-    return v.includes('65') || v.includes('senior');
-  };
-
-  // Helper to parse boolean-like values
-  const toBool = (val) => {
-    if (val === true || val === 'yes' || val === 'true' || val === '1') return true;
-    return false;
-  };
-
-  // Helper to parse number
+  const toBool = (val) => val === true || val === 'yes' || val === 'true';
   const toNumber = (val) => {
     if (val === null || val === undefined || val === '') return null;
     const num = parseFloat(String(val).replace(/[^0-9.-]/g, ''));
     return isNaN(num) ? null : num;
   };
 
-  // Helper to normalize needs array - map quiz need IDs to matching logic keys
   const normalizeNeeds = (needs) => {
-    if (!needs) return [];
-    if (!Array.isArray(needs)) return [];
+    if (!needs || !Array.isArray(needs)) return [];
     return needs.map(n => {
       const v = String(n).toLowerCase();
-      // Map quiz values to matching logic values
       if (v.includes('food') || v === 'food_help') return 'food';
-      if (v.includes('health') || v.includes('medical') || v === 'healthcare') return 'healthcare';
+      if (v.includes('health') || v === 'healthcare') return 'healthcare';
       if (v.includes('housing') || v.includes('rent')) return 'housing';
-      if (v.includes('util') || v.includes('energy') || v.includes('electric') || v === 'utilities') return 'utilities';
-      if (v.includes('cash') || v.includes('money') || v === 'cash_assistance') return 'cash';
+      if (v.includes('util') || v.includes('energy') || v === 'utilities') return 'utilities';
+      if (v.includes('cash') || v === 'cash_assistance') return 'cash';
       return v;
     });
   };
 
-  // Normalize age range - quiz uses: under_18, 18_64, 65_plus
-  let ageCategory = '18to64'; // default
   const ageVal = raw.age_range || raw.ageRange || raw.age || '';
-  if (isUnder18(ageVal)) {
-    ageCategory = 'under18';
-  } else if (is65Plus(ageVal)) {
-    ageCategory = '65plus';
-  }
-
-  // Normalize income mode
-  let incomeMode = 'monthly';
-  const modeVal = raw.income_type || raw.incomeMode || raw.incomeType || '';
-  if (String(modeVal).toLowerCase().includes('year')) {
-    incomeMode = 'yearly';
-  }
+  let ageCategory = '18to64';
+  if (String(ageVal).toLowerCase().includes('under')) ageCategory = 'under18';
+  else if (String(ageVal).includes('65')) ageCategory = '65plus';
 
   return {
-    zip: raw.zip_code || raw.zip || raw.zipCode || '',
+    zip: raw.zip_code || raw.zip || '',
     state: raw.state || '',
     householdSize: toNumber(raw.household_size || raw.householdSize) || 1,
     ageRange: ageCategory,
-    incomeMode: incomeMode,
-    income: toNumber(raw.income_amount || raw.income || raw.incomeAmount),
+    incomeMode: (raw.income_type || '').toLowerCase().includes('year') ? 'yearly' : 'monthly',
+    income: toNumber(raw.income_amount || raw.income),
     housing: (raw.housing_status || raw.housing || '').toLowerCase() === 'own' ? 'own' : 'rent',
-    disabled: toBool(raw.has_disability || raw.disabled || raw.disability),
+    disabled: toBool(raw.has_disability || raw.disabled),
     veteran: toBool(raw.is_veteran || raw.veteran),
     needs: normalizeNeeds(raw.needs),
+    hasChildren: toBool(raw.has_children || raw.pregnant_or_children),
   };
 }
 
-/**
- * Calculate yearly income from normalized data
- */
 function getYearlyIncome(data) {
   if (data.income === null) return null;
   return data.incomeMode === 'yearly' ? data.income : data.income * 12;
 }
 
-/**
- * Calculate low-income threshold based on household size
- */
 function getLowIncomeThreshold(householdSize) {
   return 25000 + (Math.max(1, householdSize) - 1) * 9000;
 }
@@ -203,24 +165,10 @@ function getLowIncomeThreshold(householdSize) {
 // ============================================
 // MATCHING LOGIC
 // ============================================
-
-/**
- * Confidence levels for program matching
- * HIGH = Strong indicators present (multiple matching factors)
- * MEDIUM = Some indicators present
- * LOW = Minimal indicators, worth checking
- */
-const CONFIDENCE = {
-  HIGH: 'high',
-  MEDIUM: 'medium',
-  LOW: 'low',
-};
-
 function matchPrograms(data) {
   const likelyMatches = [];
   const alsoCheck = [];
-  const addedToLikely = new Set();
-  const addedToAlsoCheck = new Set();
+  const added = new Set();
 
   const yearlyIncome = getYearlyIncome(data);
   const threshold = getLowIncomeThreshold(data.householdSize);
@@ -228,213 +176,101 @@ function matchPrograms(data) {
   const isLowIncome = yearlyIncome !== null && yearlyIncome < threshold;
   const isVeryLowIncome = yearlyIncome !== null && yearlyIncome < veryLowThreshold;
 
-  // Helper to add to likely
-  const addLikely = (programId, reasons, requirements, confidence = CONFIDENCE.MEDIUM) => {
-    if (!addedToLikely.has(programId)) {
-      addedToLikely.add(programId);
-      likelyMatches.push({
-        program: PROGRAMS[programId],
-        reasons,
-        requirements,
-        confidence,
-      });
+  const addLikely = (id, reasons, confidence = CONFIDENCE.MEDIUM) => {
+    if (!added.has(id)) {
+      added.add(id);
+      likelyMatches.push({ program: PROGRAMS[id], reasons, confidence });
     }
   };
 
-  // Helper to add to also check
-  const addAlsoCheck = (programId, reasons, requirements, confidence = CONFIDENCE.LOW) => {
-    if (!addedToLikely.has(programId) && !addedToAlsoCheck.has(programId)) {
-      addedToAlsoCheck.add(programId);
-      alsoCheck.push({
-        program: PROGRAMS[programId],
-        reasons,
-        requirements,
-        confidence,
-      });
+  const addAlsoCheck = (id, reasons, confidence = CONFIDENCE.LOW) => {
+    if (!added.has(id)) {
+      added.add(id);
+      alsoCheck.push({ program: PROGRAMS[id], reasons, confidence });
     }
   };
 
-  // Standard requirements
-  const baseRequirements = [
-    'Photo ID (driver\'s license, state ID, or passport)',
-    'Proof of address (utility bill, lease, or mail)',
-  ];
-  const incomeRequirements = [
-    ...baseRequirements,
-    'Proof of income (pay stubs, tax return, or benefit letters)',
-    'Additional documents may be requested depending on program',
-  ];
-
-  // ===== LIKELY MATCHES =====
-
-  // SNAP - if needs includes food
+  // SNAP - food needs
   if (data.needs.includes('food')) {
-    // High confidence if low income + food need, Medium otherwise
-    const snapConfidence = isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('snap', [
-      'You indicated you need help with food',
-      isLowIncome ? 'Your income falls within typical eligibility limits' : 'Income limits vary by state and household size',
-      `Your household size (${data.householdSize}) is factored into eligibility`,
-    ], incomeRequirements, snapConfidence);
+      'You indicated need for food assistance',
+      isLowIncome ? 'Income within typical limits' : 'Income limits vary by state',
+    ], isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM);
   }
 
-  // Medicaid - if needs healthcare AND low income
-  if (data.needs.includes('healthcare') && yearlyIncome !== null && isLowIncome) {
-    // High confidence if very low income, Medium otherwise
-    const medicaidConfidence = isVeryLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
+  // Medicaid - healthcare + low income
+  if (data.needs.includes('healthcare') && isLowIncome) {
     addLikely('medicaid', [
-      'You indicated you need help with healthcare',
-      'Your income appears to fall within Medicaid eligibility limits',
-      data.state ? `${data.state} has its own Medicaid program` : 'Each state has different Medicaid rules',
-    ], [
-      ...baseRequirements,
-      'Proof of income',
-      'Proof of citizenship or immigration status',
-      'Additional documents may be requested depending on program',
-    ], medicaidConfidence);
+      'You need healthcare assistance',
+      'Income appears within Medicaid limits',
+    ], isVeryLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM);
   }
 
-  // Medicare Savings - if 65+
+  // Medicare Savings - 65+
   if (data.ageRange === '65plus') {
-    // High confidence if 65+ AND low income
-    const msConfidence = isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('medicare_savings', [
-      'You are 65 years or older',
-      'These programs help reduce Medicare costs',
-      isLowIncome ? 'Your income may qualify you for assistance' : 'Income limits vary by program type',
-    ], [
-      'Medicare card or Medicare number',
-      ...baseRequirements,
-      'Proof of income and assets',
-      'Additional documents may be requested depending on program',
-    ], msConfidence);
+      'You are 65 or older',
+      'These programs reduce Medicare costs',
+    ], isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM);
   }
 
-  // Housing - if needs housing
+  // Housing - housing needs + rent + low income
   if (data.needs.includes('housing')) {
-    // Higher confidence if renting + low income
-    const housingConfidence = (data.housing === 'rent' && isLowIncome) ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('housing', [
-      'You indicated you need help with housing',
-      data.housing === 'rent' ? 'You currently rent your home' : 'Various housing programs may assist homeowners too',
-      'Availability and wait times vary by location',
-    ], [
-      ...baseRequirements,
-      'Proof of income for all household members',
-      'Rental history or landlord references',
-      'Additional documents may be requested depending on program',
-    ], housingConfidence);
+      'You indicated housing assistance need',
+      data.housing === 'rent' ? 'You currently rent' : 'Programs may help homeowners too',
+    ], (data.housing === 'rent' && isLowIncome) ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM);
   }
 
-  // LIHEAP - if needs utilities
+  // LIHEAP - utilities
   if (data.needs.includes('utilities')) {
-    // High confidence if low income
-    const liheapConfidence = isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('liheap', [
-      'You indicated you need help with utilities',
-      isLowIncome ? 'Your income appears within LIHEAP limits' : 'Income limits vary by state',
-      'LIHEAP helps with heating and cooling costs',
-    ], [
-      'Recent utility bill showing account number',
-      ...baseRequirements,
-      'Proof of income',
-      'Additional documents may be requested depending on program',
-    ], liheapConfidence);
+      'You need utility bill assistance',
+      'LIHEAP helps with heating/cooling costs',
+    ], isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM);
   }
 
-  // VA Benefits - if veteran
+  // VA Benefits - veteran
   if (data.veteran) {
     addLikely('va_benefits', [
-      'You indicated you are a veteran',
-      'VA benefits include healthcare, disability, pension, and education',
-      'Eligibility depends on service history and discharge status',
-    ], [
-      'DD-214 or military separation documents',
-      ...baseRequirements,
-      'Medical records (for disability claims)',
-      'Additional documents may be requested depending on program',
-    ], CONFIDENCE.HIGH); // Veterans always high confidence
-  }
-
-  // CHIP - if under 18 AND needs healthcare (goes to LIKELY)
-  if (data.ageRange === 'under18' && data.needs.includes('healthcare')) {
-    addLikely('chip', [
-      'You are under 18 years old',
-      'You indicated you need help with healthcare',
-      'CHIP covers children in families who earn too much for Medicaid',
-    ], [
-      'Child\'s birth certificate or proof of age',
-      'Proof of family income',
-      ...baseRequirements,
-      'Additional documents may be requested depending on program',
+      'You are a veteran',
+      'VA offers healthcare, disability, pension, education',
     ], CONFIDENCE.HIGH);
   }
 
-  // ===== ALSO CHECK =====
-
-  // CHIP - if under 18 (if not already in likely)
-  if (data.ageRange === 'under18') {
-    addAlsoCheck('chip', [
-      'You are under 18 years old',
-      'CHIP may provide additional coverage options',
-      'Eligibility varies by state and family income',
-    ], [
-      'Child\'s birth certificate',
-      'Proof of family income',
-      'Additional documents may be requested depending on program',
-    ], CONFIDENCE.MEDIUM);
-  }
-
-  // WIC - if needs food AND under 18
-  if (data.needs.includes('food') && data.ageRange === 'under18') {
-    addAlsoCheck('wic', [
-      'You are under 18 and need food assistance',
-      'WIC serves pregnant women, new mothers, and children under 5',
-      'Provides nutritious foods and nutrition education',
-    ], [
-      'Proof of identity for participant',
-      'Proof of residency',
-      'Proof of income',
-      'Immunization records (for children)',
-      'Additional documents may be requested depending on program',
-    ], CONFIDENCE.MEDIUM);
-  }
-
-  // SSI - if disabled OR very low income
-  if (data.disabled || isVeryLowIncome) {
-    const reasons = [];
-    if (data.disabled) reasons.push('You indicated you have a disability');
-    if (isVeryLowIncome) reasons.push('Your income is very limited');
-    if (data.ageRange === '65plus') reasons.push('You are 65 or older');
-    reasons.push('SSI provides monthly cash assistance');
-
-    if (data.disabled) {
-      // High confidence for disabled individuals
-      addLikely('ssi', reasons, [
-        'Medical records documenting disability',
-        'Proof of limited income and resources',
-        ...baseRequirements,
-        'Additional documents may be requested depending on program',
+  // CHIP - children + healthcare
+  if (data.ageRange === 'under18' || data.hasChildren) {
+    if (data.needs.includes('healthcare')) {
+      addLikely('chip', [
+        'Children in household need healthcare',
+        'CHIP covers children in moderate-income families',
       ], CONFIDENCE.HIGH);
     } else {
-      addAlsoCheck('ssi', reasons, [
-        'Proof of limited income and resources',
-        ...baseRequirements,
-        'Additional documents may be requested depending on program',
-      ], CONFIDENCE.LOW);
+      addAlsoCheck('chip', [
+        'Children may qualify for CHIP',
+        'Covers children above Medicaid limits',
+      ], CONFIDENCE.MEDIUM);
     }
   }
 
-  // SSI - if needs cash (add to also check if not already)
-  if (data.needs.includes('cash')) {
+  // WIC - children + food
+  if ((data.ageRange === 'under18' || data.hasChildren) && data.needs.includes('food')) {
+    addAlsoCheck('wic', [
+      'Children or pregnant women may qualify',
+      'Provides nutritious foods and education',
+    ], CONFIDENCE.MEDIUM);
+  }
+
+  // SSI - disabled or very low income
+  if (data.disabled) {
+    addLikely('ssi', [
+      'You have a disability',
+      'SSI provides monthly cash assistance',
+    ], CONFIDENCE.HIGH);
+  } else if (isVeryLowIncome || data.needs.includes('cash')) {
     addAlsoCheck('ssi', [
-      'You indicated you need cash assistance',
-      'SSI may be available for those with limited income',
-      'Your state may have additional cash assistance programs',
-    ], [
-      'Proof of limited income and resources',
-      ...baseRequirements,
-      'Additional documents may be requested depending on program',
+      'You may qualify based on income',
+      'SSI helps those with limited resources',
     ], CONFIDENCE.LOW);
   }
 
@@ -444,194 +280,59 @@ function matchPrograms(data) {
 // ============================================
 // UI COMPONENTS
 // ============================================
-
-function TrustBadge() {
-  return (
-    <div 
-      className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg"
-      style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}
-    >
-      <ShieldCheck className="w-5 h-5 flex-shrink-0" style={{ color: '#D08C60' }} />
-      <span className="text-base font-medium" style={{ color: '#6B625A' }}>
-        No login required. We never ask for SSN.
-      </span>
-    </div>
-  );
-}
-
 function ConfidenceBadge({ confidence }) {
   const styles = {
-    high: {
-      bg: '#E8F5E9',
-      border: '#C8E6C9',
-      text: '#2E7D32',
-      label: 'High Match',
-      icon: '✓',
-    },
-    medium: {
-      bg: '#FFF8E1',
-      border: '#FFECB3',
-      text: '#F57F17',
-      label: 'Medium Match',
-      icon: '○',
-    },
-    low: {
-      bg: '#F3E5F5',
-      border: '#E1BEE7',
-      text: '#7B1FA2',
-      label: 'Worth Checking',
-      icon: '?',
-    },
+    high: { bg: '#E8F5E9', border: '#C8E6C9', text: '#2E7D32', label: 'High Match', icon: '✓' },
+    medium: { bg: '#FFF8E1', border: '#FFECB3', text: '#F57F17', label: 'Medium Match', icon: '○' },
+    low: { bg: '#F3E5F5', border: '#E1BEE7', text: '#7B1FA2', label: 'Worth Checking', icon: '?' },
   };
-  
-  const style = styles[confidence] || styles.medium;
-  
+  const s = styles[confidence] || styles.medium;
   return (
-    <span 
-      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium"
-      style={{ 
-        backgroundColor: style.bg, 
-        border: `1px solid ${style.border}`,
-        color: style.text,
-      }}
-    >
-      <span>{style.icon}</span>
-      {style.label}
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+      style={{ backgroundColor: s.bg, border: `1px solid ${s.border}`, color: s.text }}>
+      <span>{s.icon}</span>{s.label}
     </span>
   );
 }
 
-function ProgramCard({ match, userState }) {
-  const { program, reasons, requirements, confidence } = match;
-  
-  // Get the appropriate apply URL based on program and user's state
-  const getApplyUrl = () => {
-    switch (program.id) {
-      case 'snap':
-        // SNAP has verified state-specific URLs via USDA/FNS
-        return getSnapStateApplyUrl(userState);
-      case 'medicaid':
-      case 'chip':
-        // Medicaid/CHIP uses the official help page
-        return OFFICIAL_PROGRAM_URLS.medicaid;
-      case 'medicare_savings':
-        return OFFICIAL_PROGRAM_URLS.medicare_savings;
-      case 'housing':
-        return OFFICIAL_PROGRAM_URLS.housing;
-      case 'liheap':
-        return OFFICIAL_PROGRAM_URLS.liheap;
-      case 'va_benefits':
-        return OFFICIAL_PROGRAM_URLS.va_benefits;
-      case 'ssi':
-        return OFFICIAL_PROGRAM_URLS.ssi;
-      case 'wic':
-        return OFFICIAL_PROGRAM_URLS.wic;
-      default:
-        return program.officialLink;
-    }
-  };
-
-  const applyUrl = getApplyUrl();
-  const isSnapWithState = program.id === 'snap' && userState;
-  const stateName = userState ? getStateNameFromAbbr(userState) : null;
-  
+function ProgramCard({ match }) {
+  const { program, reasons, confidence } = match;
   return (
-    <Card 
-      className="border-2 overflow-hidden transition-shadow hover:shadow-lg"
-      style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
-    >
-      <CardHeader 
-        className="pb-3"
-        style={{ backgroundColor: '#FFF8F0', borderBottom: '1px solid #E8DDCF' }}
-      >
+    <Card className="border-2 overflow-hidden" style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}>
+      <CardHeader className="pb-3" style={{ backgroundColor: '#FFF8F0', borderBottom: '1px solid #E8DDCF' }}>
         <CardTitle className="flex items-start gap-3">
-          <span className="text-3xl flex-shrink-0">{program.icon}</span>
+          <span className="text-2xl">{program.icon}</span>
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-1">
-              <h3 className="text-xl font-bold" style={{ color: '#3D3530' }}>
-                {program.name}
-              </h3>
-              {confidence && <ConfidenceBadge confidence={confidence} />}
+              <h3 className="text-lg font-bold" style={{ color: '#3D3530' }}>{program.name}</h3>
+              <ConfidenceBadge confidence={confidence} />
             </div>
-            <p className="text-base font-normal mt-1" style={{ color: '#6B625A' }}>
-              {program.description}
-            </p>
+            <p className="text-sm" style={{ color: '#6B625A' }}>{program.description}</p>
           </div>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 space-y-5">
-        {/* Why you might qualify */}
+      <CardContent className="p-4 space-y-3">
         <div>
-          <h4 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{ color: '#3D3530' }}>
-            <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#4CAF50' }} />
-            Why you might qualify
+          <h4 className="text-sm font-semibold flex items-center gap-1 mb-2" style={{ color: '#3D3530' }}>
+            <CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />
+            Why you may qualify
           </h4>
-          <ul className="space-y-2 ml-7">
-            {reasons.map((reason, index) => (
-              <li 
-                key={index} 
-                className="flex items-start gap-2 text-base"
-                style={{ color: '#6B625A' }}
-              >
-                <span 
-                  className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: '#D08C60' }} 
-                />
-                <span>{reason}</span>
+          <ul className="space-y-1 ml-5">
+            {reasons.map((r, i) => (
+              <li key={i} className="text-sm flex items-start gap-2" style={{ color: '#6B625A' }}>
+                <span className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0" style={{ backgroundColor: '#D08C60' }} />
+                {r}
               </li>
             ))}
           </ul>
         </div>
-
-        {/* What you may need */}
-        <div>
-          <h4 className="text-lg font-semibold mb-3 flex items-center gap-2" style={{ color: '#3D3530' }}>
-            <Info className="w-5 h-5 flex-shrink-0" style={{ color: '#2196F3' }} />
-            What you may need to apply
-          </h4>
-          <ul className="space-y-2 ml-7">
-            {requirements.map((req, index) => (
-              <li 
-                key={index} 
-                className="flex items-start gap-2 text-base"
-                style={{ color: '#6B625A' }}
-              >
-                <span 
-                  className="mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0" 
-                  style={{ backgroundColor: '#E8DDCF' }} 
-                />
-                <span>{req}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Apply button */}
-        <div className="pt-2">
-          <a 
-            href={applyUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <Button 
-              className="w-full h-12 text-lg text-white"
-              style={{ backgroundColor: '#D08C60' }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
-            >
-              Apply / Learn More
-              <ExternalLink className="ml-2 w-5 h-5" />
-            </Button>
-          </a>
-          {/* State-specific link notice for SNAP */}
-          {isSnapWithState && (
-            <p className="text-sm text-center mt-2" style={{ color: '#6B625A' }}>
-              <MapPin className="w-3.5 h-3.5 inline-block mr-1" style={{ color: '#D08C60' }} />
-              This link takes you to {stateName || 'your state'}'s official SNAP contact and application info.
-            </p>
-          )}
-        </div>
+        <a href={program.officialLink} target="_blank" rel="noopener noreferrer">
+          <Button className="w-full h-10 text-white" style={{ backgroundColor: '#D08C60' }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}>
+            Learn More <ExternalLink className="ml-2 w-4 h-4" />
+          </Button>
+        </a>
       </CardContent>
     </Card>
   );
@@ -640,28 +341,16 @@ function ProgramCard({ match, userState }) {
 function EmptyState() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#F8F1E9' }}>
-      <Card 
-        className="max-w-md w-full border-2"
-        style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
-      >
+      <Card className="max-w-md w-full border-2" style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}>
         <CardContent className="p-8 text-center">
           <AlertCircle className="w-16 h-16 mx-auto mb-4" style={{ color: '#D08C60' }} />
-          <h1 className="text-2xl font-bold mb-3" style={{ color: '#3D3530' }}>
-            No Quiz Answers Found
-          </h1>
+          <h1 className="text-2xl font-bold mb-3" style={{ color: '#3D3530' }}>No Quiz Answers Found</h1>
           <p className="text-lg mb-6" style={{ color: '#6B625A' }}>
-            Please take the 3-minute quiz first to see which benefits you may qualify for.
+            Take the quick quiz first to see which benefits you may qualify for.
           </p>
           <Link href="/start">
-            <Button 
-              size="lg"
-              className="w-full h-14 text-lg text-white"
-              style={{ backgroundColor: '#D08C60' }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
-            >
-              Go to Quiz
-              <ArrowRight className="ml-2 w-5 h-5" />
+            <Button size="lg" className="w-full h-14 text-lg text-white" style={{ backgroundColor: '#D08C60' }}>
+              Start Quiz <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>
         </CardContent>
@@ -670,56 +359,28 @@ function EmptyState() {
   );
 }
 
-function SummaryBadge({ icon: Icon, label, value }) {
-  if (!value) return null;
-  return (
-    <div 
-      className="flex items-center gap-2 px-3 py-1.5 rounded-full text-sm"
-      style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}
-    >
-      <Icon className="w-4 h-4" style={{ color: '#D08C60' }} />
-      <span style={{ color: '#6B625A' }}>{label}:</span>
-      <span className="font-medium" style={{ color: '#3D3530' }}>{value}</span>
-    </div>
-  );
-}
-
 // ============================================
-// MEDICARE LEAD CAPTURE MODAL
+// LEAD CAPTURE MODAL
 // ============================================
-
-function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms }) {
+function LeadCaptureModal({ isOpen, onClose, quizData, onSuccess }) {
   const [formData, setFormData] = useState({
-    full_name: '',
+    first_name: '',
     phone: '',
-    zip_code: userZip || '',
-    turning_65_soon: null,
-    has_medicare_now: null,
-    wants_call_today: null,
+    zip: quizData?.zip || '',
     consent: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitResult, setSubmitResult] = useState(null);
+  const [result, setResult] = useState(null);
   const [errors, setErrors] = useState({});
 
-  // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        full_name: '',
-        phone: '',
-        zip_code: userZip || '',
-        turning_65_soon: null,
-        has_medicare_now: null,
-        wants_call_today: null,
-        consent: false,
-      });
-      setSubmitResult(null);
+      setFormData({ first_name: '', phone: '', zip: quizData?.zip || '', consent: false });
+      setResult(null);
       setErrors({});
     }
-  }, [isOpen, userZip]);
+  }, [isOpen, quizData]);
 
-  // Format phone number as user types
   const formatPhone = (value) => {
     const digits = value.replace(/\D/g, '');
     if (digits.length <= 3) return digits;
@@ -727,88 +388,45 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
     return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
   };
 
-  const handlePhoneChange = (e) => {
-    const formatted = formatPhone(e.target.value);
-    setFormData(prev => ({ ...prev, phone: formatted }));
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.full_name || formData.full_name.trim().length < 2) {
-      newErrors.full_name = 'Please enter your full name';
-    }
+  const validate = () => {
+    const errs = {};
+    if (!formData.first_name || formData.first_name.trim().length < 2) errs.first_name = 'Please enter your name';
     const phoneDigits = formData.phone.replace(/\D/g, '');
-    if (phoneDigits.length < 10) {
-      newErrors.phone = 'Please enter a valid 10-digit phone number';
-    }
-    if (!formData.zip_code || !/^\d{5}(-\d{4})?$/.test(formData.zip_code)) {
-      newErrors.zip_code = 'Please enter a valid ZIP code';
-    }
-    if (formData.turning_65_soon === null) {
-      newErrors.turning_65_soon = 'Please answer this question';
-    }
-    if (formData.has_medicare_now === null) {
-      newErrors.has_medicare_now = 'Please answer this question';
-    }
-    if (formData.wants_call_today === null) {
-      newErrors.wants_call_today = 'Please answer this question';
-    }
-    if (!formData.consent) {
-      newErrors.consent = 'You must agree to be contacted';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (phoneDigits.length < 10) errs.phone = 'Please enter a valid 10-digit phone';
+    if (!formData.zip || !/^\d{5}/.test(formData.zip)) errs.zip = 'Please enter a valid ZIP code';
+    if (!formData.consent) errs.consent = 'You must agree to be contacted';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
+    if (!validate()) return;
     setIsSubmitting(true);
     setErrors({});
 
     try {
-      const response = await fetch('/api/leads', {
+      const response = await fetch('/api/leads/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: formData.full_name.trim(),
+          first_name: formData.first_name.trim(),
           phone: formData.phone,
-          zip_code: formData.zip_code,
-          turning_65_soon: formData.turning_65_soon,
-          has_medicare_now: formData.has_medicare_now,
-          wants_call_today: formData.wants_call_today,
+          zip: formData.zip,
           consent: formData.consent,
-          state: userState,
-          matched_programs: matchedPrograms,
-          source: 'medicare_cta',
-          page_url: typeof window !== 'undefined' ? window.location.href : null,
+          answers: quizData,
         }),
       });
 
-      const result = await response.json();
-
+      const data = await response.json();
       if (response.ok) {
-        setSubmitResult({ success: true, message: result.message });
+        setResult({ success: true, advisor: data.assigned_advisor });
+        onSuccess?.(data);
       } else {
-        setSubmitResult({ 
-          success: false, 
-          message: result.error || 'Something went wrong. Please try again.' 
-        });
-        if (result.details) {
-          const fieldErrors = {};
-          result.details.forEach(d => {
-            fieldErrors[d.field] = d.message;
-          });
-          setErrors(fieldErrors);
-        }
+        setResult({ success: false, message: data.error || 'Something went wrong' });
       }
     } catch (error) {
-      setSubmitResult({ 
-        success: false, 
-        message: 'Network error. Please check your connection and try again.' 
-      });
+      setResult({ success: false, message: 'Network error. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
@@ -817,339 +435,95 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
-      <div 
-        className="relative w-full max-w-md rounded-xl shadow-2xl overflow-hidden"
-        style={{ backgroundColor: '#FFFFFF' }}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      onClick={(e) => e.target === e.currentTarget && !result?.success && onClose()}>
+      <div className="relative w-full max-w-md rounded-xl shadow-2xl overflow-hidden" style={{ backgroundColor: '#FFFFFF' }}>
         {/* Header */}
-        <div 
-          className="p-6 pb-4"
-          style={{ backgroundColor: '#FFF8F0', borderBottom: '1px solid #E8DDCF' }}
-        >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50 transition-colors"
-            aria-label="Close"
-          >
+        <div className="p-6 pb-4" style={{ backgroundColor: '#FFF8F0', borderBottom: '1px solid #E8DDCF' }}>
+          <button onClick={onClose} className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/50">
             <X className="w-5 h-5" style={{ color: '#6B625A' }} />
           </button>
-          <div className="flex items-center gap-3 mb-2">
-            <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: '#D08C60' }}
-            >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D08C60' }}>
               <Phone className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-xl font-bold" style={{ color: '#3D3530' }}>
-                Get Free Medicare Help
-              </h2>
-              <p className="text-sm" style={{ color: '#6B625A' }}>
-                A licensed advisor will call you
-              </p>
+              <h2 className="text-xl font-bold" style={{ color: '#3D3530' }}>Get Help Near You</h2>
+              <p className="text-sm" style={{ color: '#6B625A' }}>A licensed advisor will contact you</p>
             </div>
           </div>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          {submitResult?.success ? (
-            // Success state - Updated message
+          {result?.success ? (
             <div className="text-center py-4">
-              <div 
-                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ backgroundColor: '#E8F5E9' }}
-              >
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#E8F5E9' }}>
                 <CheckCircle className="w-8 h-8" style={{ color: '#4CAF50' }} />
               </div>
-              <h3 className="text-xl font-bold mb-2" style={{ color: '#3D3530' }}>
-                Thank You!
-              </h3>
-              <p className="text-base mb-3" style={{ color: '#6B625A' }}>
-                A licensed Medicare advisor may call you in the next <strong>5–15 minutes</strong>.
+              <h3 className="text-xl font-bold mb-2" style={{ color: '#3D3530' }}>You're All Set!</h3>
+              <p className="text-base mb-4" style={{ color: '#6B625A' }}>
+                {result.advisor ? `${result.advisor.name} has been notified and may contact you soon.` : 'An advisor has been notified and may contact you soon.'}
               </p>
-              <p className="text-base mb-6 p-3 rounded-lg" style={{ backgroundColor: '#FFF8F0', color: '#8B6914' }}>
+              <p className="text-sm p-3 rounded-lg mb-4" style={{ backgroundColor: '#FFF8F0', color: '#8B6914' }}>
                 <Phone className="w-4 h-4 inline-block mr-1" />
                 <strong>Please answer unknown numbers</strong> to get help faster.
               </p>
-              <Button
-                onClick={onClose}
-                className="h-12 px-8 text-white"
-                style={{ backgroundColor: '#D08C60' }}
-              >
+              <Button onClick={onClose} className="h-12 px-8 text-white" style={{ backgroundColor: '#D08C60' }}>
                 Close
               </Button>
             </div>
           ) : (
-            // Form state
             <form onSubmit={handleSubmit} className="space-y-4">
-              {submitResult?.success === false && (
-                <div 
-                  className="p-3 rounded-lg text-sm"
-                  style={{ backgroundColor: '#FFEBEE', color: '#C62828' }}
-                >
-                  {submitResult.message}
+              {result?.success === false && (
+                <div className="p-3 rounded-lg text-sm" style={{ backgroundColor: '#FFEBEE', color: '#C62828' }}>
+                  {result.message}
                 </div>
               )}
 
               <div>
-                <Label 
-                  htmlFor="full_name" 
-                  className="text-base font-medium"
-                  style={{ color: '#3D3530' }}
-                >
-                  Full Name *
-                </Label>
-                <Input
-                  id="full_name"
-                  value={formData.full_name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, full_name: e.target.value }))}
-                  placeholder="John Smith"
-                  className="mt-1 h-12 text-base"
-                  style={{ borderColor: errors.full_name ? '#C62828' : '#E8DDCF' }}
-                  disabled={isSubmitting}
-                />
-                {errors.full_name && (
-                  <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.full_name}</p>
-                )}
+                <Label htmlFor="first_name" className="text-base font-medium" style={{ color: '#3D3530' }}>First Name *</Label>
+                <Input id="first_name" value={formData.first_name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, first_name: e.target.value }))}
+                  placeholder="John" className="mt-1 h-12 text-base"
+                  style={{ borderColor: errors.first_name ? '#C62828' : '#E8DDCF' }} disabled={isSubmitting} />
+                {errors.first_name && <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.first_name}</p>}
               </div>
 
               <div>
-                <Label 
-                  htmlFor="phone" 
-                  className="text-base font-medium"
-                  style={{ color: '#3D3530' }}
-                >
-                  Phone Number *
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handlePhoneChange}
-                  placeholder="(555) 123-4567"
-                  className="mt-1 h-12 text-base"
-                  style={{ borderColor: errors.phone ? '#C62828' : '#E8DDCF' }}
-                  disabled={isSubmitting}
-                  maxLength={14}
-                />
-                {errors.phone && (
-                  <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.phone}</p>
-                )}
+                <Label htmlFor="phone" className="text-base font-medium" style={{ color: '#3D3530' }}>Phone Number *</Label>
+                <Input id="phone" type="tel" value={formData.phone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                  placeholder="(555) 123-4567" className="mt-1 h-12 text-base" maxLength={14}
+                  style={{ borderColor: errors.phone ? '#C62828' : '#E8DDCF' }} disabled={isSubmitting} />
+                {errors.phone && <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.phone}</p>}
               </div>
 
               <div>
-                <Label 
-                  htmlFor="zip_code" 
-                  className="text-base font-medium"
-                  style={{ color: '#3D3530' }}
-                >
-                  ZIP Code *
-                </Label>
-                <Input
-                  id="zip_code"
-                  value={formData.zip_code}
-                  onChange={(e) => setFormData(prev => ({ ...prev, zip_code: e.target.value.replace(/[^\d-]/g, '').slice(0, 10) }))}
-                  placeholder="12345"
-                  className="mt-1 h-12 text-base"
-                  style={{ borderColor: errors.zip_code ? '#C62828' : '#E8DDCF' }}
-                  disabled={isSubmitting}
-                  maxLength={10}
-                />
-                {errors.zip_code && (
-                  <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.zip_code}</p>
-                )}
-              </div>
-
-              {/* Pre-qualifying Questions */}
-              <div 
-                className="pt-4 mt-2 space-y-4"
-                style={{ borderTop: '1px solid #E8DDCF' }}
-              >
-                <p className="text-sm font-medium" style={{ color: '#6B625A' }}>
-                  Quick questions to help us serve you better:
-                </p>
-
-                {/* Turning 65 Soon */}
-                <div>
-                  <p className="text-base font-medium mb-2" style={{ color: '#3D3530' }}>
-                    Are you turning 65 in the next 12 months? *
-                  </p>
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, turning_65_soon: true }))}
-                      className={`flex-1 h-10 ${formData.turning_65_soon === true ? 'ring-2' : ''}`}
-                      style={{ 
-                        borderColor: errors.turning_65_soon ? '#C62828' : (formData.turning_65_soon === true ? '#D08C60' : '#E8DDCF'),
-                        backgroundColor: formData.turning_65_soon === true ? '#FFF8F0' : 'transparent'
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, turning_65_soon: false }))}
-                      className={`flex-1 h-10 ${formData.turning_65_soon === false ? 'ring-2' : ''}`}
-                      style={{ 
-                        borderColor: errors.turning_65_soon ? '#C62828' : (formData.turning_65_soon === false ? '#D08C60' : '#E8DDCF'),
-                        backgroundColor: formData.turning_65_soon === false ? '#FFF8F0' : 'transparent'
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      No
-                    </Button>
-                  </div>
-                  {errors.turning_65_soon && (
-                    <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.turning_65_soon}</p>
-                  )}
-                </div>
-
-                {/* Has Medicare Now */}
-                <div>
-                  <p className="text-base font-medium mb-2" style={{ color: '#3D3530' }}>
-                    Do you currently have Medicare? *
-                  </p>
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, has_medicare_now: true }))}
-                      className={`flex-1 h-10 ${formData.has_medicare_now === true ? 'ring-2' : ''}`}
-                      style={{ 
-                        borderColor: errors.has_medicare_now ? '#C62828' : (formData.has_medicare_now === true ? '#D08C60' : '#E8DDCF'),
-                        backgroundColor: formData.has_medicare_now === true ? '#FFF8F0' : 'transparent'
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, has_medicare_now: false }))}
-                      className={`flex-1 h-10 ${formData.has_medicare_now === false ? 'ring-2' : ''}`}
-                      style={{ 
-                        borderColor: errors.has_medicare_now ? '#C62828' : (formData.has_medicare_now === false ? '#D08C60' : '#E8DDCF'),
-                        backgroundColor: formData.has_medicare_now === false ? '#FFF8F0' : 'transparent'
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      No
-                    </Button>
-                  </div>
-                  {errors.has_medicare_now && (
-                    <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.has_medicare_now}</p>
-                  )}
-                </div>
-
-                {/* Wants Call Today */}
-                <div>
-                  <p className="text-base font-medium mb-2" style={{ color: '#3D3530' }}>
-                    Would you like a call today? *
-                  </p>
-                  <div className="flex gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, wants_call_today: true }))}
-                      className={`flex-1 h-10 ${formData.wants_call_today === true ? 'ring-2' : ''}`}
-                      style={{ 
-                        borderColor: errors.wants_call_today ? '#C62828' : (formData.wants_call_today === true ? '#D08C60' : '#E8DDCF'),
-                        backgroundColor: formData.wants_call_today === true ? '#FFF8F0' : 'transparent'
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setFormData(prev => ({ ...prev, wants_call_today: false }))}
-                      className={`flex-1 h-10 ${formData.wants_call_today === false ? 'ring-2' : ''}`}
-                      style={{ 
-                        borderColor: errors.wants_call_today ? '#C62828' : (formData.wants_call_today === false ? '#D08C60' : '#E8DDCF'),
-                        backgroundColor: formData.wants_call_today === false ? '#FFF8F0' : 'transparent'
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      No
-                    </Button>
-                  </div>
-                  {errors.wants_call_today && (
-                    <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.wants_call_today}</p>
-                  )}
-                </div>
+                <Label htmlFor="zip" className="text-base font-medium" style={{ color: '#3D3530' }}>ZIP Code *</Label>
+                <Input id="zip" value={formData.zip}
+                  onChange={(e) => setFormData(prev => ({ ...prev, zip: e.target.value.replace(/[^\d]/g, '').slice(0, 5) }))}
+                  placeholder="12345" className="mt-1 h-12 text-base" maxLength={5}
+                  style={{ borderColor: errors.zip ? '#C62828' : '#E8DDCF' }} disabled={isSubmitting} />
+                {errors.zip && <p className="text-sm mt-1" style={{ color: '#C62828' }}>{errors.zip}</p>}
               </div>
 
               <div className="flex items-start gap-3 pt-2">
-                <Checkbox
-                  id="consent"
-                  checked={formData.consent}
+                <Checkbox id="consent" checked={formData.consent}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, consent: checked }))}
-                  className="mt-1"
-                  style={{ borderColor: errors.consent ? '#C62828' : '#D08C60' }}
-                  disabled={isSubmitting}
-                />
-                <Label 
-                  htmlFor="consent" 
-                  className="text-sm leading-relaxed cursor-pointer"
-                  style={{ color: '#6B625A' }}
-                >
-                  I agree to be contacted by a licensed Medicare advisor by phone. 
-                  I understand this is a free service with no obligation.
+                  className="mt-1" style={{ borderColor: errors.consent ? '#C62828' : '#D08C60' }} disabled={isSubmitting} />
+                <Label htmlFor="consent" className="text-sm leading-relaxed cursor-pointer" style={{ color: '#6B625A' }}>
+                  I agree to be contacted by a licensed advisor by phone. This is a free service with no obligation.
                 </Label>
               </div>
-              {errors.consent && (
-                <p className="text-sm" style={{ color: '#C62828' }}>{errors.consent}</p>
-              )}
+              {errors.consent && <p className="text-sm" style={{ color: '#C62828' }}>{errors.consent}</p>}
 
-              {/* Honeypot field - hidden from users */}
-              <input
-                type="text"
-                name="website"
-                style={{ display: 'none' }}
-                tabIndex={-1}
-                autoComplete="off"
-              />
-
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full h-14 text-lg text-white mt-4"
-                style={{ backgroundColor: '#D08C60' }}
-                onMouseOver={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#B76E45')}
-                onMouseOut={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = '#D08C60')}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Phone className="mr-2 w-5 h-5" />
-                    Request Free Callback
-                  </>
-                )}
+              <Button type="submit" disabled={isSubmitting} className="w-full h-14 text-lg text-white mt-4" style={{ backgroundColor: '#D08C60' }}>
+                {isSubmitting ? <><Loader2 className="mr-2 w-5 h-5 animate-spin" />Submitting...</> : <><Phone className="mr-2 w-5 h-5" />Get Free Help</>}
               </Button>
 
               <p className="text-xs text-center pt-2" style={{ color: '#6B625A' }}>
-                🔒 Your information is secure and will only be used to connect you with a licensed advisor.
+                🔒 Your information is secure and only used to connect you with an advisor.
               </p>
             </form>
           )}
@@ -1160,85 +534,30 @@ function LeadCaptureModal({ isOpen, onClose, userState, userZip, matchedPrograms
 }
 
 // ============================================
-// MEDICARE CTA SECTION
+// CTA SECTION
 // ============================================
-
-function MedicareCTA({ onOpenModal, userState }) {
-  const stateName = userState ? getStateNameFromAbbr(userState) : null;
-  
+function HelpCTA({ onOpenModal }) {
   return (
-    <Card 
-      className="border-2 overflow-hidden no-print"
-      style={{ 
-        borderColor: '#D08C60', 
-        backgroundColor: '#FFF8F0',
-        boxShadow: '0 4px 20px rgba(208, 140, 96, 0.15)'
-      }}
-    >
-      <CardContent className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-center gap-6">
-          {/* Icon */}
-          <div 
-            className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#D08C60' }}
-          >
-            <UserCheck className="w-10 h-10 text-white" />
+    <Card className="border-2 overflow-hidden" style={{ borderColor: '#D08C60', backgroundColor: '#FFF8F0', boxShadow: '0 4px 20px rgba(208,140,96,0.15)' }}>
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#D08C60' }}>
+            <UserCheck className="w-8 h-8 text-white" />
           </div>
-          
-          {/* Content */}
           <div className="flex-1 text-center md:text-left">
-            <h3 className="text-2xl font-bold mb-2" style={{ color: '#3D3530' }}>
-              Need Help Understanding Medicare?
-            </h3>
-            <p className="text-lg mb-4" style={{ color: '#6B625A' }}>
-              Get a <strong>free callback</strong> from a licensed Medicare advisor 
-              {stateName ? ` in ${stateName}` : ''} who can explain your options and help you enroll.
+            <h3 className="text-xl font-bold mb-1" style={{ color: '#3D3530' }}>Need Help Understanding Your Options?</h3>
+            <p className="text-base mb-3" style={{ color: '#6B625A' }}>
+              Get a <strong>free callback</strong> from a licensed advisor who can explain your options and help you apply.
             </p>
-            <ul className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-2 text-base mb-4" style={{ color: '#6B625A' }}>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />
-                100% Free
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />
-                No Obligation
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />
-                Licensed Advisors
-              </li>
-            </ul>
+            <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm" style={{ color: '#6B625A' }}>
+              <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />100% Free</span>
+              <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />No Obligation</span>
+              <span className="flex items-center gap-1"><CheckCircle className="w-4 h-4" style={{ color: '#4CAF50' }} />Licensed Advisors</span>
+            </div>
           </div>
-          
-          {/* CTA Button */}
-          <div className="flex-shrink-0">
-            <Button
-              onClick={onOpenModal}
-              size="lg"
-              className="h-14 px-8 text-lg text-white shadow-lg"
-              style={{ backgroundColor: '#D08C60' }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#B76E45'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#D08C60'}
-            >
-              <Phone className="mr-2 w-5 h-5" />
-              Get Help Near Me
-            </Button>
-          </div>
-        </div>
-        
-        {/* Trust indicators */}
-        <div 
-          className="mt-6 pt-4 flex flex-wrap justify-center gap-4 text-sm"
-          style={{ borderTop: '1px solid #E8DDCF', color: '#6B625A' }}
-        >
-          <span className="flex items-center gap-1">
-            <ShieldCheck className="w-4 h-4" style={{ color: '#D08C60' }} />
-            We never share your info
-          </span>
-          <span className="flex items-center gap-1">
-            <Phone className="w-4 h-4" style={{ color: '#D08C60' }} />
-            Callback within 1 business day
-          </span>
+          <Button onClick={onOpenModal} size="lg" className="h-14 px-8 text-lg text-white shadow-lg flex-shrink-0" style={{ backgroundColor: '#D08C60' }}>
+            <Phone className="mr-2 w-5 h-5" />Get Help Near Me
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -1246,15 +565,14 @@ function MedicareCTA({ onOpenModal, userState }) {
 }
 
 // ============================================
-// MAIN COMPONENT
+// MAIN PAGE
 // ============================================
-
 export default function ResultsPage() {
   const [rawData, setRawData] = useState(null);
   const [normalizedData, setNormalizedData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState({ likelyMatches: [], alsoCheck: [] });
-  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -1262,9 +580,8 @@ export default function ResultsPage() {
       if (saved) {
         const parsed = JSON.parse(saved);
         setRawData(parsed);
-        
         const normalized = normalizeQuizData(parsed);
-        if (normalized && (normalized.zip || normalized.state || normalized.needs.length > 0 || normalized.ageRange !== '18to64' || normalized.veteran || normalized.disabled)) {
+        if (normalized && (normalized.zip || normalized.state || normalized.needs.length > 0 || normalized.veteran || normalized.disabled)) {
           setNormalizedData(normalized);
           setMatches(matchPrograms(normalized));
         }
@@ -1276,43 +593,16 @@ export default function ResultsPage() {
     }
   }, []);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = () => window.print();
+  const handleRestart = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.href = '/start';
   };
-
-  // Check if Medicare CTA should show - expanded triggers
-  const hasMedicareProgram = matches.likelyMatches.some(m => m.program.id === 'medicare_savings') ||
-                              matches.alsoCheck.some(m => m.program.id === 'medicare_savings');
-  const isSenior = normalizedData?.ageRange === '65plus';
-  
-  // Additional triggers: healthcare-related needs or situations
-  const healthcareRelatedNeeds = ['healthcare', 'prescriptions', 'medical'];
-  const hasHealthcareNeed = normalizedData?.needs?.some(need => 
-    healthcareRelatedNeeds.some(h => need.toLowerCase().includes(h))
-  );
-  const hasDisability = normalizedData?.disabled === true;
-  const hasMedicaidMatch = matches.likelyMatches.some(m => m.program.id === 'medicaid') ||
-                           matches.alsoCheck.some(m => m.program.id === 'medicaid');
-  const hasSSIMatch = matches.likelyMatches.some(m => m.program.id === 'ssi') ||
-                      matches.alsoCheck.some(m => m.program.id === 'ssi');
-  
-  // Show CTA for: seniors, Medicare/Medicaid/SSI matches, healthcare needs, or disability
-  const showMedicareCTA = hasMedicareProgram || isSenior || hasHealthcareNeed || 
-                          hasDisability || hasMedicaidMatch || hasSSIMatch;
-
-  // Get list of matched program IDs for lead tracking
-  const matchedProgramIds = [
-    ...matches.likelyMatches.map(m => m.program.id),
-    ...matches.alsoCheck.map(m => m.program.id),
-  ];
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F8F1E9' }}>
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: '#D08C60' }} />
-          <p className="text-xl" style={{ color: '#6B625A' }}>Loading your results...</p>
-        </div>
+        <Loader2 className="w-12 h-12 animate-spin" style={{ color: '#D08C60' }} />
       </div>
     );
   }
@@ -1324,271 +614,167 @@ export default function ResultsPage() {
   const { likelyMatches, alsoCheck } = matches;
   const hasResults = likelyMatches.length > 0 || alsoCheck.length > 0;
 
-  // Format age range for display
-  const ageRangeDisplay = {
-    'under18': 'Under 18',
-    '18to64': '18-64',
-    '65plus': '65+',
-  }[normalizedData.ageRange] || normalizedData.ageRange;
+  const ageDisplay = { under18: 'Under 18', '18to64': '18-64', '65plus': '65+' }[normalizedData.ageRange] || '';
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F8F1E9' }}>
       {/* Header */}
-      <header 
-        className="w-full no-print"
-        style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8DDCF' }}
-      >
+      <header className="w-full no-print" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E8DDCF' }}>
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div 
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: '#D08C60' }}
-            >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#D08C60' }}>
               <Heart className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-bold" style={{ color: '#3D3530' }}>BenefitBuddy</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link href="/start">
-              <Button 
-                variant="outline" 
-                className="h-10 px-4"
-                style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
-              >
-                <Edit className="w-4 h-4 mr-2" />
-                Edit Answers
-              </Button>
-            </Link>
-            <Button 
-              variant="outline" 
-              onClick={handlePrint}
-              className="h-10 px-4"
-              style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Print
+            <Button variant="outline" onClick={handlePrint} className="h-10 px-4" style={{ borderColor: '#E8DDCF', color: '#6B625A' }}>
+              <Printer className="w-4 h-4 mr-2" />Print
+            </Button>
+            <Button variant="outline" onClick={handleRestart} className="h-10 px-4" style={{ borderColor: '#E8DDCF', color: '#6B625A' }}>
+              <RefreshCw className="w-4 h-4 mr-2" />Restart
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Print Header */}
-      <div className="hidden print:block p-4" style={{ borderBottom: '1px solid #E8DDCF' }}>
-        <h1 className="text-2xl font-bold" style={{ color: '#3D3530' }}>BenefitBuddy - Your Results</h1>
-        <p style={{ color: '#6B625A' }}>Generated on {new Date().toLocaleDateString()}</p>
-      </div>
-
       <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Page Title */}
+        {/* Title */}
         <div className="text-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: '#3D3530' }}>
-            Your Results
-          </h1>
-          <p className="text-xl" style={{ color: '#6B625A' }}>
-            Based on your answers, here are programs you may qualify for.
-          </p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: '#3D3530' }}>Your Results</h1>
+          <p className="text-lg" style={{ color: '#6B625A' }}>Programs you may qualify for based on your answers.</p>
         </div>
 
-        {/* Summary badges */}
+        {/* Summary */}
         <div className="flex flex-wrap justify-center gap-2 mb-6">
-          <SummaryBadge icon={MapPin} label="State" value={normalizedData.state} />
-          <SummaryBadge icon={Users} label="Household" value={`${normalizedData.householdSize} ${normalizedData.householdSize === 1 ? 'person' : 'people'}`} />
-          <SummaryBadge icon={Calendar} label="Age" value={ageRangeDisplay} />
+          {normalizedData.state && (
+            <span className="flex items-center gap-1 px-3 py-1 rounded-full text-sm" style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}>
+              <MapPin className="w-4 h-4" style={{ color: '#D08C60' }} />{normalizedData.state}
+            </span>
+          )}
+          <span className="flex items-center gap-1 px-3 py-1 rounded-full text-sm" style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}>
+            <Users className="w-4 h-4" style={{ color: '#D08C60' }} />{normalizedData.householdSize} {normalizedData.householdSize === 1 ? 'person' : 'people'}
+          </span>
+          {ageDisplay && (
+            <span className="flex items-center gap-1 px-3 py-1 rounded-full text-sm" style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}>
+              <Calendar className="w-4 h-4" style={{ color: '#D08C60' }} />{ageDisplay}
+            </span>
+          )}
         </div>
 
         {/* Trust Badge */}
-        <div className="mb-6">
-          <TrustBadge />
+        <div className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg mb-6" style={{ backgroundColor: '#FFF8F0', border: '1px solid #E8DDCF' }}>
+          <ShieldCheck className="w-5 h-5" style={{ color: '#D08C60' }} />
+          <span className="text-base font-medium" style={{ color: '#6B625A' }}>We never ask for your SSN. Your info stays private.</span>
         </div>
 
         {/* Disclaimer */}
-        <div 
-          className="rounded-lg p-4 mb-8"
-          style={{ backgroundColor: '#FEF3E2', border: '1px solid #E8DDCF' }}
-        >
+        <div className="rounded-lg p-4 mb-8" style={{ backgroundColor: '#FEF3E2', border: '1px solid #E8DDCF' }}>
           <p style={{ color: '#8B6914' }}>
-            <strong>⚠️ Important:</strong> These are suggestions based on general eligibility guidelines. 
-            Actual eligibility is determined by each program's rules. Always verify with official sources.
+            <strong>⚠️ Important:</strong> These are suggestions based on general guidelines. Actual eligibility is determined by each program. Always verify with official sources.
           </p>
         </div>
 
+        {/* CTA - Get Help */}
+        <div className="mb-8 no-print">
+          <HelpCTA onOpenModal={() => setIsModalOpen(true)} />
+        </div>
+
         {!hasResults ? (
-          <Card 
-            className="border-2 text-center p-8"
-            style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
-          >
-            <CardContent className="p-0">
-              <p className="text-xl mb-4" style={{ color: '#6B625A' }}>
-                Based on your answers, we couldn't identify specific programs to recommend.
-              </p>
-              <p className="text-base mb-6" style={{ color: '#6B625A' }}>
-                This doesn't mean you're not eligible. Try updating your answers or visit Benefits.gov for a complete search.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/start">
-                  <Button 
-                    variant="outline"
-                    size="lg"
-                    className="h-12 px-6"
-                    style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
-                  >
-                    <Edit className="mr-2 w-5 h-5" />
-                    Edit Answers
-                  </Button>
-                </Link>
-                <a href="https://www.benefits.gov" target="_blank" rel="noopener noreferrer">
-                  <Button 
-                    size="lg"
-                    className="h-12 px-6 text-white"
-                    style={{ backgroundColor: '#D08C60' }}
-                  >
-                    Search Benefits.gov
-                    <ExternalLink className="ml-2 w-5 h-5" />
-                  </Button>
-                </a>
-              </div>
-            </CardContent>
+          <Card className="border-2 text-center p-8" style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}>
+            <p className="text-xl mb-4" style={{ color: '#6B625A' }}>We couldn't identify specific programs to recommend.</p>
+            <p className="text-base mb-6" style={{ color: '#6B625A' }}>Try updating your answers or visit Benefits.gov for a complete search.</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/start">
+                <Button variant="outline" size="lg" className="h-12 px-6" style={{ borderColor: '#E8DDCF', color: '#6B625A' }}>
+                  <Edit className="mr-2 w-5 h-5" />Edit Answers
+                </Button>
+              </Link>
+              <a href="https://www.benefits.gov" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" className="h-12 px-6 text-white" style={{ backgroundColor: '#D08C60' }}>
+                  Search Benefits.gov <ExternalLink className="ml-2 w-5 h-5" />
+                </Button>
+              </a>
+            </div>
           </Card>
         ) : (
           <>
-            {/* Likely Matches Section */}
+            {/* Likely Matches */}
             {likelyMatches.length > 0 && (
-              <section className="mb-10">
+              <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-2 flex items-center gap-2" style={{ color: '#3D3530' }}>
-                  <CheckCircle className="w-7 h-7" style={{ color: '#4CAF50' }} />
-                  Likely Matches
+                  <CheckCircle className="w-6 h-6" style={{ color: '#4CAF50' }} />
+                  Likely Matches ({likelyMatches.length})
                 </h2>
-                <p className="text-base mb-6 ml-9" style={{ color: '#6B625A' }}>
-                  Programs you're most likely to qualify for ({likelyMatches.length} found)
-                </p>
-                <div className="space-y-6">
-                  {likelyMatches.map((match) => (
-                    <ProgramCard key={match.program.id} match={match} userState={normalizedData?.state} />
-                  ))}
+                <p className="text-base mb-4 ml-8" style={{ color: '#6B625A' }}>Programs you're most likely to qualify for</p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {likelyMatches.map((m) => <ProgramCard key={m.program.id} match={m} />)}
                 </div>
               </section>
             )}
 
-            {/* Also Check Section */}
+            {/* Also Check */}
             {alsoCheck.length > 0 && (
-              <section className="mb-10">
+              <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-2 flex items-center gap-2" style={{ color: '#3D3530' }}>
-                  <Info className="w-7 h-7" style={{ color: '#2196F3' }} />
-                  Also Check
+                  <Info className="w-6 h-6" style={{ color: '#2196F3' }} />
+                  Also Check ({alsoCheck.length})
                 </h2>
-                <p className="text-base mb-6 ml-9" style={{ color: '#6B625A' }}>
-                  Additional programs worth exploring ({alsoCheck.length} found)
-                </p>
-                <div className="space-y-6">
-                  {alsoCheck.map((match) => (
-                    <ProgramCard key={match.program.id} match={match} userState={normalizedData?.state} />
-                  ))}
+                <p className="text-base mb-4 ml-8" style={{ color: '#6B625A' }}>Additional programs worth exploring</p>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {alsoCheck.map((m) => <ProgramCard key={m.program.id} match={m} />)}
                 </div>
-              </section>
-            )}
-
-            {/* Medicare Lead Capture CTA - Show for seniors or Medicare matches */}
-            {showMedicareCTA && (
-              <section className="mb-10">
-                <MedicareCTA 
-                  onOpenModal={() => setIsLeadModalOpen(true)} 
-                  userState={normalizedData?.state}
-                />
               </section>
             )}
           </>
         )}
 
-        {/* Additional Resources */}
-        <Card 
-          className="border-2 mt-8 no-print"
-          style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}
-        >
+        {/* Bottom Actions */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 no-print">
+          <Link href="/start">
+            <Button variant="outline" size="lg" className="h-12 px-6 w-full sm:w-auto" style={{ borderColor: '#E8DDCF', color: '#6B625A' }}>
+              <Edit className="mr-2 w-5 h-5" />Edit Answers
+            </Button>
+          </Link>
+          <Button variant="outline" size="lg" onClick={handlePrint} className="h-12 px-6 w-full sm:w-auto" style={{ borderColor: '#E8DDCF', color: '#6B625A' }}>
+            <Printer className="mr-2 w-5 h-5" />Print Results
+          </Button>
+        </div>
+
+        {/* Resources */}
+        <Card className="border-2 mt-8 no-print" style={{ borderColor: '#E8DDCF', backgroundColor: '#FFFFFF' }}>
           <CardHeader>
-            <CardTitle className="text-xl" style={{ color: '#3D3530' }}>
-              📚 Additional Resources
-            </CardTitle>
+            <CardTitle className="text-lg" style={{ color: '#3D3530' }}>📚 Additional Resources</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <a 
-              href="https://www.benefits.gov" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-base hover:underline"
-              style={{ color: '#D08C60' }}
-            >
-              Benefits.gov - Search all federal benefits
-              <ExternalLink className="w-4 h-4" />
+          <CardContent className="space-y-2">
+            <a href="https://www.benefits.gov" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-base hover:underline" style={{ color: '#D08C60' }}>
+              Benefits.gov - Search all federal benefits <ExternalLink className="w-4 h-4" />
             </a>
-            <a 
-              href="https://www.findhelp.org" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-base hover:underline"
-              style={{ color: '#D08C60' }}
-            >
-              FindHelp.org - Local assistance programs
-              <ExternalLink className="w-4 h-4" />
+            <a href="https://www.findhelp.org" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-base hover:underline" style={{ color: '#D08C60' }}>
+              FindHelp.org - Local assistance <ExternalLink className="w-4 h-4" />
             </a>
-            <a 
-              href="https://www.211.org" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-base hover:underline"
-              style={{ color: '#D08C60' }}
-            >
-              211.org - Call 211 for local help
-              <ExternalLink className="w-4 h-4" />
+            <a href="https://www.211.org" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-base hover:underline" style={{ color: '#D08C60' }}>
+              211.org - Call 211 for local help <ExternalLink className="w-4 h-4" />
             </a>
           </CardContent>
         </Card>
-
-        {/* Bottom Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 no-print">
-          <Link href="/start">
-            <Button 
-              variant="outline"
-              size="lg"
-              className="h-12 px-6 w-full sm:w-auto"
-              style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
-            >
-              <Edit className="mr-2 w-5 h-5" />
-              Edit Answers
-            </Button>
-          </Link>
-          <Button 
-            variant="outline"
-            size="lg"
-            onClick={handlePrint}
-            className="h-12 px-6 w-full sm:w-auto"
-            style={{ borderColor: '#E8DDCF', color: '#6B625A' }}
-          >
-            <Printer className="mr-2 w-5 h-5" />
-            Print Results
-          </Button>
-        </div>
       </main>
 
       {/* Footer */}
-      <footer 
-        className="w-full mt-12 py-6 no-print"
-        style={{ backgroundColor: '#FFF8F0', borderTop: '1px solid #E8DDCF' }}
-      >
+      <footer className="w-full mt-12 py-6 no-print" style={{ backgroundColor: '#FFF8F0', borderTop: '1px solid #E8DDCF' }}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-sm" style={{ color: '#6B625A' }}>
-            BenefitBuddy is not affiliated with any government agency. 
-            For official information, please visit the agency websites directly.
+            BenefitBuddy is not affiliated with any government agency. Visit official websites for authoritative information.
           </p>
         </div>
       </footer>
 
-      {/* Lead Capture Modal */}
+      {/* Lead Modal */}
       <LeadCaptureModal
-        isOpen={isLeadModalOpen}
-        onClose={() => setIsLeadModalOpen(false)}
-        userState={normalizedData?.state}
-        userZip={normalizedData?.zip}
-        matchedPrograms={matchedProgramIds}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        quizData={rawData}
+        onSuccess={(data) => console.log('Lead created:', data)}
       />
     </div>
   );
