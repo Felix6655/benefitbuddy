@@ -204,6 +204,18 @@ function getLowIncomeThreshold(householdSize) {
 // MATCHING LOGIC
 // ============================================
 
+/**
+ * Confidence levels for program matching
+ * HIGH = Strong indicators present (multiple matching factors)
+ * MEDIUM = Some indicators present
+ * LOW = Minimal indicators, worth checking
+ */
+const CONFIDENCE = {
+  HIGH: 'high',
+  MEDIUM: 'medium',
+  LOW: 'low',
+};
+
 function matchPrograms(data) {
   const likelyMatches = [];
   const alsoCheck = [];
@@ -217,25 +229,27 @@ function matchPrograms(data) {
   const isVeryLowIncome = yearlyIncome !== null && yearlyIncome < veryLowThreshold;
 
   // Helper to add to likely
-  const addLikely = (programId, reasons, requirements) => {
+  const addLikely = (programId, reasons, requirements, confidence = CONFIDENCE.MEDIUM) => {
     if (!addedToLikely.has(programId)) {
       addedToLikely.add(programId);
       likelyMatches.push({
         program: PROGRAMS[programId],
         reasons,
         requirements,
+        confidence,
       });
     }
   };
 
   // Helper to add to also check
-  const addAlsoCheck = (programId, reasons, requirements) => {
+  const addAlsoCheck = (programId, reasons, requirements, confidence = CONFIDENCE.LOW) => {
     if (!addedToLikely.has(programId) && !addedToAlsoCheck.has(programId)) {
       addedToAlsoCheck.add(programId);
       alsoCheck.push({
         program: PROGRAMS[programId],
         reasons,
         requirements,
+        confidence,
       });
     }
   };
@@ -255,15 +269,19 @@ function matchPrograms(data) {
 
   // SNAP - if needs includes food
   if (data.needs.includes('food')) {
+    // High confidence if low income + food need, Medium otherwise
+    const snapConfidence = isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('snap', [
       'You indicated you need help with food',
       isLowIncome ? 'Your income falls within typical eligibility limits' : 'Income limits vary by state and household size',
       `Your household size (${data.householdSize}) is factored into eligibility`,
-    ], incomeRequirements);
+    ], incomeRequirements, snapConfidence);
   }
 
   // Medicaid - if needs healthcare AND low income
   if (data.needs.includes('healthcare') && yearlyIncome !== null && isLowIncome) {
+    // High confidence if very low income, Medium otherwise
+    const medicaidConfidence = isVeryLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('medicaid', [
       'You indicated you need help with healthcare',
       'Your income appears to fall within Medicaid eligibility limits',
@@ -273,11 +291,13 @@ function matchPrograms(data) {
       'Proof of income',
       'Proof of citizenship or immigration status',
       'Additional documents may be requested depending on program',
-    ]);
+    ], medicaidConfidence);
   }
 
   // Medicare Savings - if 65+
   if (data.ageRange === '65plus') {
+    // High confidence if 65+ AND low income
+    const msConfidence = isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('medicare_savings', [
       'You are 65 years or older',
       'These programs help reduce Medicare costs',
@@ -287,11 +307,13 @@ function matchPrograms(data) {
       ...baseRequirements,
       'Proof of income and assets',
       'Additional documents may be requested depending on program',
-    ]);
+    ], msConfidence);
   }
 
   // Housing - if needs housing
   if (data.needs.includes('housing')) {
+    // Higher confidence if renting + low income
+    const housingConfidence = (data.housing === 'rent' && isLowIncome) ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('housing', [
       'You indicated you need help with housing',
       data.housing === 'rent' ? 'You currently rent your home' : 'Various housing programs may assist homeowners too',
@@ -301,11 +323,13 @@ function matchPrograms(data) {
       'Proof of income for all household members',
       'Rental history or landlord references',
       'Additional documents may be requested depending on program',
-    ]);
+    ], housingConfidence);
   }
 
   // LIHEAP - if needs utilities
   if (data.needs.includes('utilities')) {
+    // High confidence if low income
+    const liheapConfidence = isLowIncome ? CONFIDENCE.HIGH : CONFIDENCE.MEDIUM;
     addLikely('liheap', [
       'You indicated you need help with utilities',
       isLowIncome ? 'Your income appears within LIHEAP limits' : 'Income limits vary by state',
@@ -315,7 +339,7 @@ function matchPrograms(data) {
       ...baseRequirements,
       'Proof of income',
       'Additional documents may be requested depending on program',
-    ]);
+    ], liheapConfidence);
   }
 
   // VA Benefits - if veteran
@@ -329,7 +353,7 @@ function matchPrograms(data) {
       ...baseRequirements,
       'Medical records (for disability claims)',
       'Additional documents may be requested depending on program',
-    ]);
+    ], CONFIDENCE.HIGH); // Veterans always high confidence
   }
 
   // CHIP - if under 18 AND needs healthcare (goes to LIKELY)
@@ -343,7 +367,7 @@ function matchPrograms(data) {
       'Proof of family income',
       ...baseRequirements,
       'Additional documents may be requested depending on program',
-    ]);
+    ], CONFIDENCE.HIGH);
   }
 
   // ===== ALSO CHECK =====
@@ -358,7 +382,7 @@ function matchPrograms(data) {
       'Child\'s birth certificate',
       'Proof of family income',
       'Additional documents may be requested depending on program',
-    ]);
+    ], CONFIDENCE.MEDIUM);
   }
 
   // WIC - if needs food AND under 18
@@ -373,7 +397,7 @@ function matchPrograms(data) {
       'Proof of income',
       'Immunization records (for children)',
       'Additional documents may be requested depending on program',
-    ]);
+    ], CONFIDENCE.MEDIUM);
   }
 
   // SSI - if disabled OR very low income
@@ -385,18 +409,19 @@ function matchPrograms(data) {
     reasons.push('SSI provides monthly cash assistance');
 
     if (data.disabled) {
+      // High confidence for disabled individuals
       addLikely('ssi', reasons, [
         'Medical records documenting disability',
         'Proof of limited income and resources',
         ...baseRequirements,
         'Additional documents may be requested depending on program',
-      ]);
+      ], CONFIDENCE.HIGH);
     } else {
       addAlsoCheck('ssi', reasons, [
         'Proof of limited income and resources',
         ...baseRequirements,
         'Additional documents may be requested depending on program',
-      ]);
+      ], CONFIDENCE.LOW);
     }
   }
 
@@ -410,7 +435,7 @@ function matchPrograms(data) {
       'Proof of limited income and resources',
       ...baseRequirements,
       'Additional documents may be requested depending on program',
-    ]);
+    ], CONFIDENCE.LOW);
   }
 
   return { likelyMatches, alsoCheck };
