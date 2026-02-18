@@ -217,7 +217,7 @@ const jsonLd = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" style={{ backgroundColor: '#F8F1E9' }}>
+    <html lang="en" className="bg-[#F8F1E9]">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -228,7 +228,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={inter.className} style={{ backgroundColor: '#F8F1E9', color: '#2E2A26', minHeight: '100vh' }}>
+      <body className={`${inter.className} bg-[#F8F1E9] text-[#2E2A26] min-h-screen antialiased`}>
         {children}
       </body>
     </html>
