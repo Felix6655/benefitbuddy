@@ -502,7 +502,7 @@ function ConfidenceBadge({ confidence }) {
 }
 
 function ProgramCard({ match, userState }) {
-  const { program, reasons, requirements } = match;
+  const { program, reasons, requirements, confidence } = match;
   
   // Get the appropriate apply URL based on program and user's state
   const getApplyUrl = () => {
