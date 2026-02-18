@@ -546,10 +546,13 @@ function ProgramCard({ match, userState }) {
       >
         <CardTitle className="flex items-start gap-3">
           <span className="text-3xl flex-shrink-0">{program.icon}</span>
-          <div>
-            <h3 className="text-xl font-bold" style={{ color: '#3D3530' }}>
-              {program.name}
-            </h3>
+          <div className="flex-1">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h3 className="text-xl font-bold" style={{ color: '#3D3530' }}>
+                {program.name}
+              </h3>
+              {confidence && <ConfidenceBadge confidence={confidence} />}
+            </div>
             <p className="text-base font-normal mt-1" style={{ color: '#6B625A' }}>
               {program.description}
             </p>
