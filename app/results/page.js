@@ -459,6 +459,48 @@ function TrustBadge() {
   );
 }
 
+function ConfidenceBadge({ confidence }) {
+  const styles = {
+    high: {
+      bg: '#E8F5E9',
+      border: '#C8E6C9',
+      text: '#2E7D32',
+      label: 'High Match',
+      icon: '✓',
+    },
+    medium: {
+      bg: '#FFF8E1',
+      border: '#FFECB3',
+      text: '#F57F17',
+      label: 'Medium Match',
+      icon: '○',
+    },
+    low: {
+      bg: '#F3E5F5',
+      border: '#E1BEE7',
+      text: '#7B1FA2',
+      label: 'Worth Checking',
+      icon: '?',
+    },
+  };
+  
+  const style = styles[confidence] || styles.medium;
+  
+  return (
+    <span 
+      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium"
+      style={{ 
+        backgroundColor: style.bg, 
+        border: `1px solid ${style.border}`,
+        color: style.text,
+      }}
+    >
+      <span>{style.icon}</span>
+      {style.label}
+    </span>
+  );
+}
+
 function ProgramCard({ match, userState }) {
   const { program, reasons, requirements } = match;
   
