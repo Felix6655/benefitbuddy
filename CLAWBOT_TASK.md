@@ -3,75 +3,47 @@
 ## Repo Identity
 Name: benefitbuddy  
 Remote: https://github.com/Felix6655/benefitbuddy  
-Current Branch: lead-system-v1  
+Branch: lead-system-v1  
 Local Path: C:\Users\Luis\benefitbuddy
 
-## Project Purpose
-BenefitBuddy is a senior-friendly Medicare + benefits finder web app.
-
-Core flow:
-- Homepage (/)
-- Quiz wizard (/start)
-- Results page (/results)
-
-## Tech Stack
+## Stack
 Framework: Next.js (App Router)
 
-Main folders:
-- /app → routes + layouts
-- /components → UI blocks
-- /lib → helpers/utilities
+## Deployment (Vercel)
+Framework Preset: Next.js (auto-detected)
+Overrides: NONE enabled
 
-Theme:
-- Warm paper design
-- Background: #F8F1E9
-- Text: #2E2A26
-- Simple, large, senior-friendly UI
+Package Manager: Yarn  
+- Keep: yarn.lock  
+- Do NOT add: package-lock.json
 
-## Deployment (Do NOT Guess)
-Before changing install/build commands:
-1. Check Vercel Project Settings
-2. Confirm Root Directory + Install Command
-3. Use ONLY the detected package manager (npm OR yarn)
+Install: yarn install  
+Build: next build  
+Output: Next.js default
 
-Never mix lockfiles without verifying deployment settings.
+## Purpose
+Senior-friendly Medicare + benefits finder.
 
-## Current Completed Work
-- SEO pack implemented:
-	- Meta tags
-	- OpenGraph + Twitter cards
-	- JSON-LD structured data
-	- sitemap.xml + robots.txt
+Flow:
+- / → homepage
+- /start → quiz wizard
+- /results → benefits matches
 
-- Quiz wizard built at `/start`
-- Quiz saves to localStorage key:
-	`benefitbuddy_quiz`
+## Current Completed
+- Full SEO pack (meta, OG, JSON-LD, sitemap, robots)
+- Quiz wizard built with localStorage persistence
 
-## Current Objective (Next Work)
-Build `/results` page:
+## Next Objective
+Build /results page:
 
-1. Load quiz data safely from localStorage (client-only)
-2. Display:
-
-### Likely Matches
-- SNAP
-- Medicaid
-- Medicare Savings Programs
-
-### Also Check
-- Housing assistance
-- LIHEAP (utility help)
-- CHIP/WIC
-- SSI
-- VA benefits (if veteran)
-
-3. Add:
-- Print button
-- Official placeholder links
-- Clear “No SSN required” trust message
+- Load quiz from localStorage (client-only)
+- Show Likely Matches + Also Check programs:
+	SNAP, Medicaid, Medicare Savings, Housing, LIHEAP, VA, CHIP/WIC, SSI
+- Add Print button
+- Add official placeholder links
+- Keep UI simple + senior-friendly
 
 ## Guardrails
-- Keep UI simple and senior-friendly
-- Avoid breaking routing or theme
-- Do not add new env vars unless required
-- Always work on branch: lead-system-v1
+- Do not change Vercel install/build commands
+- Do not mix npm + yarn lockfiles
+- Stay on branch lead-system-v1
